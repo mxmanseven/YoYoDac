@@ -1,7 +1,6 @@
 #include "Pins_Arduino.h"
 #include "Encoder.h"
 
-
 int Encoder::count = 0;
 int Encoder::encoderAPin = 0;
 int Encoder::encoderBPin = 0;
@@ -18,8 +17,6 @@ void IRAM_ATTR Encoder::isrA() {
   }
 }
 
-
-
 // // rotory b chanel
 // void IRAM_ATTR  isrB() {
 //   if (digitalRead(encoderPinA) == digitalRead(encoderPinB)) {
@@ -30,7 +27,6 @@ void IRAM_ATTR Encoder::isrA() {
 //     digitalWrite(LED_BUILTIN_PIN, LOW);
 //   }
 // }
-
 
 void Encoder::InitEncoder(
         int aPin,
@@ -49,4 +45,13 @@ void Encoder::InitEncoder(
   //attachInterrupt(digitalPinToInterrupt(encoderPinB), isrB, CHANGE);
   // dissable one of the interrupts to reduce the resolution by half
   // with the amazon ldp3806-600bn this leads to about 1200 ticks per rotation - more than enough
+}
+
+int Encoder::getCount() {
+  // knh todo - add mutex or other isr protection
+  return Encoder::count;
+}
+
+void Encoder::zeroCount() {
+  Encoder::count = 0;
 }

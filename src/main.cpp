@@ -8,11 +8,6 @@
 #error Bluetooth is not enabled! Please run `make menuconfig` to and enable it
 #endif
 
-// // Libraries for SD card
-// #include "FS.h"
-// #include "SD.h"
-// #include <SPI.h>
-
 // Define CS pin for the SD card module
 #define SD_CS_PIN 5
 
@@ -40,16 +35,36 @@ void initEncoder() {
   Encoder::InitEncoder(encoderPinA, encoderPinB, LED_BUILTIN_PIN);
 }
 
-int readingID = 1000;
+volatile int interruptCounter;
+int totalInterruptCounter;
+ 
+hw_timer_t * timer = NULL;
+portMUX_TYPE timerMux = portMUX_INITIALIZER_UNLOCKED;
+ 
+bool isFull = false;
+bool timerTriggered = false;
 
-// Write the sensor readings on the SD card
-void logSDCard() {
-  
-  fileKnh.writeFile(SD, FILE_PATH, "");
-  fileKnh.testAppendBuffToFile(SD, FILE_PATH, buff, 1024);
-  
-  fileKnh.writeFile(SD, FILE_PATH, "");
-  fileKnh.testAppendBuffToFile(SD, FILE_PATH, buff, 2048);
+void IRAM_ATTR onTimer() {
+  portENTER_CRITICAL_ISR(&timerMux);
+  interruptCounter++;
+  Sample s;
+  s.sample = Encoder::getCount();
+  s.mills = millis();
+  bool isFullLoc = false;
+  buff.Push(s, isFullLoc);
+  if (isFullLoc) isFull = true;
+
+  timerTriggered = true;
+  portEXIT_CRITICAL_ISR(&timerMux); 
+}
+
+void initTimer() {
+  int timerHdId = 0;
+  int timerPrescaller = 80;
+  timer = timerBegin(timerHdId, timerPrescaller, true);
+  timerAttachInterrupt(timer, &onTimer, true);
+  timerAlarmWrite(timer, 10000, true);
+  timerAlarmEnable(timer);
 }
 
 void setup() {
@@ -58,15 +73,33 @@ void setup() {
   pinMode (LED_BUILTIN_PIN, OUTPUT);
   initEncoder();
   //initBlueTooth();
-  //initSdFs();
-
-  //buff.Test();
 
   fileKnh.initSdFs(SD_CS_PIN);
-  logSDCard();
+  fileKnh.writeFile(SD, FILE_PATH, "");
+
+  initTimer();
 }
 
 void loop() {  
+  if (isFull) {
+    Serial.println("Buff is full, writing to file, ms: " + String(millis()));
+    fileKnh.appendBuffToFile(SD, FILE_PATH, buff);
+    isFull = false;
+  }
+
+
+  // Sample s;
+  // s.sample = Encoder::getCount();
+
+  // Serial.println(String(s.sample));
+
+  // delay(1000);
+
+  // if(timerTriggered) {
+  //   timerTriggered = false;
+  //    Serial.println(String(millis()) + " timer");
+  // }
+
   // if (Serial.available()) {
   //   SerialBT.write(Serial.read());
   // }

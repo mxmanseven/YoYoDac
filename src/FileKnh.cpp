@@ -81,7 +81,6 @@ void FileKnh::appendFile(
   file.close();
 }
 
-
 void FileKnh::appendBuffToFile(
     fs::FS &fs, 
     const char * path,
@@ -98,7 +97,11 @@ void FileKnh::appendBuffToFile(
   while (isMore) {
     sample = buff.GetNext(isMore);
     
-    String v = String(sample.mills) + "\r\n";
+    String v = 
+      String(sample.sample)
+      + "," + String(sample.mills)
+      + "\r\n";
+    
     //Serial.println(v);
     
     file.print(v);

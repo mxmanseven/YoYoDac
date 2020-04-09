@@ -16,6 +16,9 @@ class Encoder {
         int ledPinp
     );
 
+    static int getCount();
+    static void zeroCount();
+
     static void IRAM_ATTR isrA();
 
     //private:
