@@ -46,10 +46,10 @@ int readingID = 1000;
 void logSDCard() {
   
   fileKnh.writeFile(SD, FILE_PATH, "");
-  fileKnh.testAppendBuffToFile(SD, FILE_PATH, buff, 100);
+  fileKnh.testAppendBuffToFile(SD, FILE_PATH, buff, 1024);
   
   fileKnh.writeFile(SD, FILE_PATH, "");
-  fileKnh.testAppendBuffToFile(SD, FILE_PATH, buff, 1000);
+  fileKnh.testAppendBuffToFile(SD, FILE_PATH, buff, 2048);
 }
 
 void setup() {

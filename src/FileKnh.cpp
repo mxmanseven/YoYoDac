@@ -129,8 +129,8 @@ void FileKnh::testAppendBuffToFile(
   
   for(int i = 0; i < recordCount; i++) {
     Sample sample;
-    sample.mills = i;
-    sample.sample = -1 * i;
+    sample.mills = i + 1;
+    sample.sample = -1 * (i + 1);
     bool isFull = false;
     buff.Push(sample, isFull);
     

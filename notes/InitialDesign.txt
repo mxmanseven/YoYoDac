@@ -19,3 +19,36 @@ sd card reader:
   don't use a reader at all:
   https://alexlubbock.com/micro-sd-adapter-esp8266-esp32
 
+
+SD card write times
+    circ buffer size 10:
+        records     ms
+        10          81
+        1000        932
+    
+    circ buffer size 100:
+        records     ms
+        1000        150 to 167
+    
+    circ buffer size 256:
+        records     ms
+        512         53 to 71
+        1024        99 to 100
+
+    circ buffer size 512:
+        records     ms
+        512         35
+        1024        73
+
+    circ buffer size 1024 scandisk:
+        records     ms              allocation size
+        1024        53  to 74       64 b
+        1024        55 to 67       2048 b
+        2048        118 to 138
+        
+    circ buffer size 1024, green card:
+        records     ms              allocation size
+        1024        51 to 65              ?
+        2048        101 to 106            ?
+
+Green card has slight advantage
