@@ -24,10 +24,9 @@ volatile uint32_t count = 0;
 uint32_t protectedCount = 0;
 uint32_t previousCount = 0;
 
-String dataMessage;
+const char* FILE_PATH = "/data.txt";
 
 BluetoothSerial SerialBT;
-
 Buff buff;
 FileKnh fileKnh;
 
@@ -45,10 +44,12 @@ int readingID = 1000;
 
 // Write the sensor readings on the SD card
 void logSDCard() {
-  dataMessage = String(readingID++) + "\r\n";
-  Serial.print("Save data: ");
-  Serial.println(dataMessage);
-  fileKnh.appendFile(SD, "/data.txt", dataMessage.c_str());
+  
+  fileKnh.writeFile(SD, FILE_PATH, "");
+  fileKnh.testAppendBuffToFile(SD, FILE_PATH, buff, 100);
+  
+  fileKnh.writeFile(SD, FILE_PATH, "");
+  fileKnh.testAppendBuffToFile(SD, FILE_PATH, buff, 1000);
 }
 
 void setup() {
