@@ -14,7 +14,8 @@ class Buff
     Buff();
     int Push(Sample value, bool& isFulll);
     Sample GetNext(bool& isMore);
-    static const int buffSize = 1024;
+    void Test();
+    static const int buffSize = 512;
     Sample aBuff[buffSize];
     Sample bBuff[buffSize];
 

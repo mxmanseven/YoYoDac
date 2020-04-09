@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include "BluetoothSerial.h"
+#include "Buff.h"
 
 #if !defined(CONFIG_BT_ENABLED) || !defined(CONFIG_BLUEDROID_ENABLED)
 #error Bluetooth is not enabled! Please run `make menuconfig` to and enable it
@@ -26,6 +27,8 @@ int ledState = HIGH;
 String dataMessage;
 
 BluetoothSerial SerialBT;
+
+Buff buff;
 
 // rotory a chanel
 void IRAM_ATTR isrA() {
@@ -127,11 +130,13 @@ void initSdFs() {
 
 void setup() {
   Serial.begin(115200);
-  delay(100);
+  delay(1000);
   pinMode (LED_BUILTIN_PIN, OUTPUT);
-  EncoderSetup();
+  //EncoderSetup();
   //initBlueTooth();
-  initSdFs();
+  //initSdFs();
+
+  buff.Test();
 }
 
 int readingID = 0;

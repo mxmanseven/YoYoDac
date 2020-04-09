@@ -63,3 +63,27 @@ Sample Buff::GetNext(bool& isMore) {
     }
     return value;
 }
+
+// set loop count to many times buff size to exercise 
+// moving between buffers.
+// Should print out numbers 1 to loop count.
+void Buff::Test() {
+    Buff buff;
+    Serial.println("Buff Test");
+
+    for(int i = 0; i < 100; i++) {
+        Sample sample;
+        sample.mills = i;
+        sample.sample = -1 * i;
+        bool isFull = false;
+        buff.Push(sample, isFull);
+        
+        if (isFull) {
+            bool isMore = true;
+            while (isMore) {
+                sample = buff.GetNext(isMore);
+                Serial.println(String(sample.mills));
+            }
+        }
+    }
+}
