@@ -1,0 +1,21 @@
+Goal 100 measurements per second
+
+what gets measured?
+    * time              32 bits
+    * Wheel Position    32 bits
+
+
+Sample size 64 bits -> 8 Bytes
+bytes per second 800 B
+
+flash size: 16,000,000 bytes
+
+Samples until flash is full: 
+    16,000,000 / 800 -> 
+    20,000 seconds !
+    
+    
+sd card reader:
+  don't use a reader at all:
+  https://alexlubbock.com/micro-sd-adapter-esp8266-esp32
+
