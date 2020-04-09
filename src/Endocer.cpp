@@ -18,6 +18,20 @@ void IRAM_ATTR Encoder::isrA() {
   }
 }
 
+
+
+// // rotory b chanel
+// void IRAM_ATTR  isrB() {
+//   if (digitalRead(encoderPinA) == digitalRead(encoderPinB)) {
+//     count ++;
+//     digitalWrite(LED_BUILTIN_PIN, HIGH);
+//   } else {
+//     count --;
+//     digitalWrite(LED_BUILTIN_PIN, LOW);
+//   }
+// }
+
+
 void Encoder::InitEncoder(
         int aPin,
         int bPin,
