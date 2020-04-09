@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include "BluetoothSerial.h"
 #include "Buff.h"
+#include "Encoder.h"
 
 #if !defined(CONFIG_BT_ENABLED) || !defined(CONFIG_BLUEDROID_ENABLED)
 #error Bluetooth is not enabled! Please run `make menuconfig` to and enable it
@@ -25,42 +26,43 @@ uint32_t previousCount = 0;
 int ledState = HIGH;
 
 String dataMessage;
+//Encoder encoder;
 
 BluetoothSerial SerialBT;
 
 Buff buff;
 
-// rotory a chanel
-void IRAM_ATTR isrA() {
-  if(digitalRead(encoderPinA) != digitalRead(encoderPinB)) {
-    count ++;
-    digitalWrite(LED_BUILTIN_PIN, HIGH);   // turn the LED on (HIGH is the voltage level)
-  } else {
-    count --;
-    digitalWrite(LED_BUILTIN_PIN, LOW);   // turn the LED on (HIGH is the voltage level)
-  }
-}
+// // rotory a chanel
+// void IRAM_ATTR isrA() {
+//   if(digitalRead(encoderPinA) != digitalRead(encoderPinB)) {
+//     count ++;
+//     digitalWrite(LED_BUILTIN_PIN, HIGH);
+//   } else {
+//     count --;
+//     digitalWrite(LED_BUILTIN_PIN, LOW);
+//   }
+// }
 
-// rotory b chanel
-void IRAM_ATTR  isrB() {
-  if (digitalRead(encoderPinA) == digitalRead(encoderPinB)) {
-    count ++;
-    digitalWrite(LED_BUILTIN_PIN, HIGH);   // turn the LED on (HIGH is the voltage level)
-  } else {
-    count --;
-    digitalWrite(LED_BUILTIN_PIN, LOW);   // turn the LED on (HIGH is the voltage level)
-  }
-}
+// // rotory b chanel
+// void IRAM_ATTR  isrB() {
+//   if (digitalRead(encoderPinA) == digitalRead(encoderPinB)) {
+//     count ++;
+//     digitalWrite(LED_BUILTIN_PIN, HIGH);
+//   } else {
+//     count --;
+//     digitalWrite(LED_BUILTIN_PIN, LOW);
+//   }
+// }
 
-void EncoderSetup() {
-  pinMode(encoderPinA, INPUT_PULLUP);
-  pinMode(encoderPinB, INPUT_PULLUP);
+// void EncoderSetup() {
+//   pinMode(encoderPinA, INPUT_PULLUP);
+//   pinMode(encoderPinB, INPUT_PULLUP);
 
-  attachInterrupt(digitalPinToInterrupt(encoderPinA), isrA, CHANGE);
-  //attachInterrupt(digitalPinToInterrupt(encoderPinB), isrB, CHANGE);
-  // dissable one of the interrupts to reduce the resolution by half
-  // with the amazon ldp3806-600bn this leads to about 1200 ticks per rotation - more than enough
-}
+//   attachInterrupt(digitalPinToInterrupt(encoderPinA), isrA, CHANGE);
+//   //attachInterrupt(digitalPinToInterrupt(encoderPinB), isrB, CHANGE);
+//   // dissable one of the interrupts to reduce the resolution by half
+//   // with the amazon ldp3806-600bn this leads to about 1200 ticks per rotation - more than enough
+// }
 
 void initBlueTooth() {  
   Serial.begin(115200);
@@ -136,7 +138,9 @@ void setup() {
   //initBlueTooth();
   //initSdFs();
 
-  buff.Test();
+  //buff.Test();
+  //encoder.InitEncoder(encoderPinA, encoderPinB, LED_BUILTIN_PIN);
+  Encoder::InitEncoder(encoderPinA, encoderPinB, LED_BUILTIN_PIN);
 }
 
 int readingID = 0;
@@ -150,13 +154,13 @@ void logSDCard() {
 }
 
 void loop() {  
-  if (Serial.available()) {
-    SerialBT.write(Serial.read());
-  }
-  if (SerialBT.available()) {
-    Serial.write(SerialBT.read());
-  }
-  delay(2000);
+  // if (Serial.available()) {
+  //   SerialBT.write(Serial.read());
+  // }
+  // if (SerialBT.available()) {
+  //   Serial.write(SerialBT.read());
+  // }
+  // delay(2000);
 
-  logSDCard();
+  // logSDCard();
 }
