@@ -6,15 +6,22 @@ int Encoder::encoderAPin = 0;
 int Encoder::encoderBPin = 0;
 int Encoder::ledPin = 0;
 
+portMUX_TYPE Encoder::mux = portMUX_INITIALIZER_UNLOCKED;
+
 // rotory a chanel
 void IRAM_ATTR Encoder::isrA() {
-  if(digitalRead(Encoder::encoderAPin) != digitalRead(Encoder::encoderBPin)) {
+  int a = digitalRead(Encoder::encoderAPin);
+  int b = digitalRead(Encoder::encoderBPin);
+
+  portENTER_CRITICAL_ISR(&Encoder::mux);
+  if(a != b) {
     Encoder::count ++;
     digitalWrite(Encoder::ledPin, HIGH);
   } else {
     Encoder::count --;
     digitalWrite(Encoder::ledPin, LOW);
   }
+  portEXIT_CRITICAL_ISR(&Encoder::mux);
 }
 
 // // rotory b chanel
@@ -49,7 +56,11 @@ void Encoder::InitEncoder(
 
 int Encoder::getCount() {
   // knh todo - add mutex or other isr protection
-  return Encoder::count;
+  int c = 0;
+  portENTER_CRITICAL_ISR(&Encoder::mux);
+  c = Encoder::count;
+  portEXIT_CRITICAL_ISR(&Encoder::mux);
+  return c;
 }
 
 void Encoder::zeroCount() {

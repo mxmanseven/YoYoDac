@@ -34,31 +34,28 @@ void initBlueTooth() {
 void initEncoder() {
   Encoder::InitEncoder(encoderPinA, encoderPinB, LED_BUILTIN_PIN);
 }
-
-volatile int interruptCounter;
-int totalInterruptCounter;
  
 hw_timer_t * timer = NULL;
 portMUX_TYPE timerMux = portMUX_INITIALIZER_UNLOCKED;
  
-bool isFull = false;
-bool timerTriggered = false;
+volatile bool isBuffFull = false;
+volatile bool timerTriggered = false;
 
 void IRAM_ATTR onTimer() {
   portENTER_CRITICAL_ISR(&timerMux);
-  interruptCounter++;
   Sample s;
   s.sample = Encoder::getCount();
   s.mills = millis();
   bool isFullLoc = false;
   buff.Push(s, isFullLoc);
-  if (isFullLoc) isFull = true;
+  if (isFullLoc) isBuffFull = true;
 
   timerTriggered = true;
   portEXIT_CRITICAL_ISR(&timerMux); 
 }
 
 void initTimer() {
+  // https://techtutorialsx.com/2017/10/07/esp32-arduino-timer-interrupts/
   int timerHdId = 0;
   int timerPrescaller = 80;
   timer = timerBegin(timerHdId, timerPrescaller, true);
@@ -80,33 +77,20 @@ void setup() {
   initTimer();
 }
 
-void loop() {  
-  if (isFull) {
+void loop() {
+  bool isBuffFullLoc = false;
+  
+  portENTER_CRITICAL_ISR(&timerMux);
+  isBuffFullLoc = isBuffFull;
+  portEXIT_CRITICAL_ISR(&timerMux); 
+
+  if (isBuffFullLoc) {
+  // if (isFull) {
     Serial.println("Buff is full, writing to file, ms: " + String(millis()));
     fileKnh.appendBuffToFile(SD, FILE_PATH, buff);
-    isFull = false;
-  }
-
-
-  // Sample s;
-  // s.sample = Encoder::getCount();
-
-  // Serial.println(String(s.sample));
-
-  // delay(1000);
-
-  // if(timerTriggered) {
-  //   timerTriggered = false;
-  //    Serial.println(String(millis()) + " timer");
-  // }
-
-  // if (Serial.available()) {
-  //   SerialBT.write(Serial.read());
-  // }
-  // if (SerialBT.available()) {
-  //   Serial.write(SerialBT.read());
-  // }
-  // delay(2000);
-
-  // logSDCard();
+      
+    portENTER_CRITICAL_ISR(&timerMux);
+    isBuffFull = false;
+    portEXIT_CRITICAL_ISR(&timerMux); 
+   }
 }

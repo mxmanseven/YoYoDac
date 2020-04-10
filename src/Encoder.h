@@ -9,6 +9,8 @@ class Encoder {
     static int encoderAPin;
     static int encoderBPin;
     static int ledPin;
+    
+    static portMUX_TYPE mux;
 
     static void InitEncoder(
         int aPin,
