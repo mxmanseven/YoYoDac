@@ -52,3 +52,4 @@ SD card write times
         2048        101 to 106            ?
 
 Green card has slight advantage
+
