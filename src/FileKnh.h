@@ -3,15 +3,14 @@
 
 // Libraries for SD card
 #include "FS.h"
-#include "SD.h"
+#include "SD_MMC.h"
 #include <SPI.h>
 #include "Buff.h"
 
 class FileKnh {
     public:
     FileKnh();
-    int sdCsPin;
-    void initSdFs(int sdCsPinIn);
+    void initSdFs();
 
     void appendFile(
         fs::FS &fs, 

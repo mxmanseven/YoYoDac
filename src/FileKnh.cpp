@@ -1,28 +1,24 @@
 #include "FileKnh.h"
 
 FileKnh::FileKnh() {
-    sdCsPin = 0;
 }
 
-
-void FileKnh::initSdFs(int sdCsPinIn) {
-    sdCsPin = sdCsPinIn;
-
+void FileKnh::initSdFs() {
   // Initialize SD card
-  SD.begin(sdCsPin);  
-  if(!SD.begin(sdCsPin)) {
+  SD_MMC.begin();  
+  if(!SD_MMC.begin()) {
     Serial.println("Card Mount Failed");
     return;
   }
 
-  uint8_t cardType = SD.cardType();
+  uint8_t cardType = SD_MMC.cardType();
   if(cardType == CARD_NONE) {
     Serial.println("No SD card attached");
     return;
   }
 
   Serial.println("Initializing SD card...");
-  if (!SD.begin(sdCsPin)) {
+  if (!SD_MMC.begin()) {
     Serial.println("ERROR - SD card initialization failed!");
     return;    // init failed
   }
@@ -98,8 +94,8 @@ void FileKnh::appendBuffToFile(
     sample = buff.GetNext(isMore);
     
     String v = 
-      String(sample.sample)
-      + "," + String(sample.mills)
+      String(sample.mills)
+      + "\t" + String(sample.sample)
       + "\r\n";
     
     //Serial.println(v);

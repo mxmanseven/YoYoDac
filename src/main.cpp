@@ -8,9 +8,6 @@
 #error Bluetooth is not enabled! Please run `make menuconfig` to and enable it
 #endif
 
-// Define CS pin for the SD card module
-#define SD_CS_PIN 5
-
 const int LED_BUILTIN_PIN = 2;
 const byte encoderPinA = 27;
 const byte encoderPinB = 26;
@@ -71,8 +68,8 @@ void setup() {
   initEncoder();
   //initBlueTooth();
 
-  fileKnh.initSdFs(SD_CS_PIN);
-  fileKnh.writeFile(SD, FILE_PATH, "");
+  fileKnh.initSdFs();
+  fileKnh.writeFile(SD_MMC, FILE_PATH, "");
 
   initTimer();
 }
@@ -87,7 +84,7 @@ void loop() {
   if (isBuffFullLoc) {
   // if (isFull) {
     Serial.println("Buff is full, writing to file, ms: " + String(millis()));
-    fileKnh.appendBuffToFile(SD, FILE_PATH, buff);
+    fileKnh.appendBuffToFile(SD_MMC, FILE_PATH, buff);
       
     portENTER_CRITICAL_ISR(&timerMux);
     isBuffFull = false;
