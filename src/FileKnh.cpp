@@ -3,38 +3,63 @@
 FileKnh::FileKnh() {
 }
 
+// cam
+// void FileKnh::initSdFs() {
+//   // Initialize SD card
+//   SD_MMC.begin();  
+//   if(!SD_MMC.begin()) {
+//     Serial.println("Card Mount Failed");
+//     return;
+//   }
+
+//   uint8_t cardType = SD_MMC.cardType();
+//   if(cardType == CARD_NONE) {
+//     Serial.println("No SD card attached");
+//     return;
+//   }
+
+//   Serial.println("Initializing SD card...");
+//   if (!SD_MMC.begin()) {
+//     Serial.println("ERROR - SD card initialization failed!");
+//     return;    // init failed
+//   }
+
+//   // // If the data.txt file doesn't exist
+//   // // Create a file on the SD card and write the data labels
+//   // File file = SD.open("/data.txt");
+//   // if(!file) {
+//   //   Serial.println("File doens't exist");
+//   //   Serial.println("Creating file...");
+//   //   writeFile(SD, "/data.txt", "Reading ID, Date, Hour, Temperature \r\n");
+//   // }
+//   // else {
+//   //   Serial.println("File already exists");  
+//   // }
+//   // file.close();
+// }
+
+
+// non-cam
 void FileKnh::initSdFs() {
   // Initialize SD card
-  SD_MMC.begin();  
-  if(!SD_MMC.begin()) {
+  int sdcs = 5;
+  SD.begin(sdcs);
+  if(!SD.begin(sdcs)) {
     Serial.println("Card Mount Failed");
     return;
   }
 
-  uint8_t cardType = SD_MMC.cardType();
+  uint8_t cardType = SD.cardType();
   if(cardType == CARD_NONE) {
     Serial.println("No SD card attached");
     return;
   }
 
   Serial.println("Initializing SD card...");
-  if (!SD_MMC.begin()) {
+  if (!SD.begin(sdcs)) {
     Serial.println("ERROR - SD card initialization failed!");
     return;    // init failed
   }
-
-  // // If the data.txt file doesn't exist
-  // // Create a file on the SD card and write the data labels
-  // File file = SD.open("/data.txt");
-  // if(!file) {
-  //   Serial.println("File doens't exist");
-  //   Serial.println("Creating file...");
-  //   writeFile(SD, "/data.txt", "Reading ID, Date, Hour, Temperature \r\n");
-  // }
-  // else {
-  //   Serial.println("File already exists");  
-  // }
-  // file.close();
 }
 
 void FileKnh::writeFile(

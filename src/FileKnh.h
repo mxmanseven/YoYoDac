@@ -3,7 +3,8 @@
 
 // Libraries for SD card
 #include "FS.h"
-#include "SD_MMC.h"
+//#include "SD_MMC.h" // cam
+#include "SD.h" // non-cam
 #include <SPI.h>
 #include "Buff.h"
 

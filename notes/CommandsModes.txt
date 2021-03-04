@@ -1,0 +1,14 @@
+let's start simple:
+
+1) Command/Mode
+    two commands:
+      1) download file
+      2) zero distance and reset file
+      
+      
+2) sample
+    send all samples form file, one at a time. Clear file when done.
+      it might be easier for client to pull all data 
+      instead of doing notifications.
+      
+      
