@@ -1,5 +1,9 @@
 #include <Arduino.h>
 
+#include <BLEDevice.h>
+#include <BLEUtils.h>
+#include <BLEServer.h>
+
 #include "Buff.h"
 #include "Encoder.h"
 #include "FileKnh.h"
@@ -27,6 +31,107 @@ FileKnh fileKnh;
 
 void initEncoder() {
   Encoder::InitEncoder(encoderPinA, encoderPinB, LED_BUILTIN_PIN);
+}
+
+// See the following for generating UUIDs:
+// https://www.uuidgenerator.net/
+
+#define SERVICE_UUID        "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
+#define CHARACTERISTIC_COMMAND_MODE_UUID "beb5483e-36e1-4688-b7f5-ea07361b26a8"
+#define CHARACTERISTIC_SAMPLE_UUID       "cda2ac87-84a9-4cbc-8de8-f0285889a4e9"
+                                    
+class CallbackCommandMode: public BLECharacteristicCallbacks {
+    void onWrite(BLECharacteristic *pCharacteristicCommandMode) {
+      std::string value = pCharacteristicCommandMode->getValue();
+
+      if (value.length() > 0) {
+        Serial.println("*#*#*#");
+        Serial.print("New command: ");
+        for (int i = 0; i < value.length(); i++)
+          Serial.print(value[i]);
+
+        Serial.println();
+        Serial.println("*********");
+      }
+    }
+};
+
+class CallbackSample: public BLECharacteristicCallbacks {
+    void onWrite(BLECharacteristic *pCharacteristicCommandMode) {
+      std::string value = pCharacteristicCommandMode->getValue();
+
+      if (value.length() > 0) {
+        Serial.println("sample update");
+        for (int i = 0; i < value.length(); i++)
+          Serial.print(value[i]);
+
+        Serial.println();
+        Serial.println("*********");
+      }
+    }
+};
+
+BLECharacteristic *pCharacteristicCommandMode;
+BLECharacteristic *pCharacteristicSample;
+
+void initCommandModeCharacteristic(BLEService *pService) {
+  pCharacteristicCommandMode = pService->createCharacteristic(
+                                         CHARACTERISTIC_COMMAND_MODE_UUID,
+                                         BLECharacteristic::PROPERTY_READ |
+                                         BLECharacteristic::PROPERTY_WRITE
+                                       );
+
+  pCharacteristicCommandMode->setCallbacks(new CallbackCommandMode());
+
+  pCharacteristicCommandMode->setValue("Hello World");
+}
+
+void initCommandSample(BLEService *pService) {
+  pCharacteristicSample = pService->createCharacteristic(
+                                         CHARACTERISTIC_SAMPLE_UUID,
+                                         BLECharacteristic::PROPERTY_READ |
+                                         BLECharacteristic::PROPERTY_WRITE
+                                       );
+
+  pCharacteristicSample->setCallbacks(new CallbackCommandMode());
+
+  pCharacteristicSample->setValue("Hello World");
+}
+
+void initBle() {
+  Serial.println("1- Download and install an BLE scanner app in your phone");
+  Serial.println("2- Scan for BLE devices in the app");
+  Serial.println("3- Connect to MyESP32");
+  Serial.println("4- Go to CUSTOM CHARACTERISTIC in CUSTOM SERVICE and write something");
+  Serial.println("5- See the magic =) ):");
+
+  BLEDevice::init("YoYo DAC");
+  BLEServer *pServer = BLEDevice::createServer();
+  BLEService *pService = pServer->createService(SERVICE_UUID);
+  
+  initCommandModeCharacteristic(pService);
+  initCommandSample(pService);
+
+  pCharacteristicCommandMode = pService->createCharacteristic(
+                                         CHARACTERISTIC_COMMAND_MODE_UUID,
+                                         BLECharacteristic::PROPERTY_READ |
+                                         BLECharacteristic::PROPERTY_WRITE
+                                       );
+  pCharacteristicCommandMode->setCallbacks(new CallbackCommandMode());
+  pCharacteristicCommandMode->setValue("command mode");
+  
+  pCharacteristicSample = pService->createCharacteristic(
+                                         CHARACTERISTIC_SAMPLE_UUID,
+                                         BLECharacteristic::PROPERTY_READ |
+                                         BLECharacteristic::PROPERTY_WRITE
+                                       );
+  pCharacteristicCommandMode->setCallbacks(new CallbackSample());
+  pCharacteristicSample->setValue("sample");
+
+  pService->start();
+
+  BLEAdvertising *pAdvertising = pServer->getAdvertising();
+  pAdvertising->start();
 }
 
 hw_timer_t * timer = NULL;
@@ -80,6 +185,8 @@ void setup() {
 
   initTimer();
 
+  initBle();
+
   delay(2000);
   Serial.println("exiting setup");
 }
@@ -91,13 +198,19 @@ void loop() {
   delay(1000);
   Serial.println(millis());
 
+  uint32_t m = millis();
+  uint32_t m2 = m * 2;
+  Serial.println(m, HEX);
+  pCharacteristicCommandMode->setValue(m);
+  pCharacteristicSample->setValue(m2);
 
- digitalWrite(LED_BUILTIN_PIN, HIGH);
- delay(1000);
- digitalWrite(LED_BUILTIN_PIN, LOW);
 
- bool isMore = false;
- Sample s = buff.GetNext(isMore);
+  digitalWrite(LED_BUILTIN_PIN, HIGH);
+  delay(1000);
+  digitalWrite(LED_BUILTIN_PIN, LOW);
+
+  bool isMore = false;
+  Sample s = buff.GetNext(isMore);
   Serial.println(s.sample);
 
   portENTER_CRITICAL_ISR(&timerMux);
@@ -108,7 +221,6 @@ void loop() {
   Serial.println("timer exec count " + String(timerExeCountLoc));
 
   if (isBuffFullLoc) {
-  // if (isFull) {
     Serial.println("Buff is full, writing to file, ms: " + String(millis()));
     fileKnh.appendBuffToFile(SD, FILE_PATH, buff);
 
