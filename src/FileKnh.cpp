@@ -118,10 +118,10 @@ void FileKnh::appendBuffToFile(
   while (isMore) {
     sample = buff.GetNext(isMore);
     
-    String v = 
-      String(sample.mills)
-      + "\t" + String(sample.sample)
-      + "\r\n";
+    String v = SampleToString(sample);
+      // String(sample.mills)
+      // + "\t" + String(sample.sample)
+      // + "\r\n";
     
     //Serial.println(v);
     

@@ -8,12 +8,15 @@ struct Sample {
     uint32_t mills;
 };
 
+String SampleToString(Sample s);
+
 class Buff
 {
     public:
     Buff();
     int Push(Sample value, bool& isFulll);
     Sample GetNext(bool& isMore);
+    void ZeroOut();
     void Test();
     static const int buffSize = 1024;
     Sample aBuff[buffSize];
@@ -25,6 +28,7 @@ class Buff
     int bHead;
     int bTail;
     bool bIsFull;
+    Sample lastSample;
 };
 
 #endif

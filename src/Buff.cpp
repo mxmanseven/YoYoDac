@@ -1,5 +1,11 @@
 #include "Buff.h"
 
+String SampleToString(Sample sample) {
+    return String(sample.mills)
+      + "\t" + String(sample.sample)
+      + "\r\n";
+}
+
 Buff::Buff() {
     aHead = 0;
     aTail = 0;
@@ -10,6 +16,7 @@ Buff::Buff() {
 }
 
 int Buff::Push(Sample value, bool& isFull) {
+    lastSample = value;
     int result = 0;
     if (!aIsFull && aHead < buffSize) {
         aBuff[aHead++] = value;
@@ -62,6 +69,21 @@ Sample Buff::GetNext(bool& isMore) {
         }
     }
     return value;
+}
+
+void Buff::ZeroOut() {
+    aHead = 0;
+    aTail = 0;
+    aIsFull = false;
+    bHead = 0;
+    bTail = 0;
+    bIsFull = false;
+    
+    // maybe i don not need to zero out the array if the  pointers (ahead, atail...)
+    // are zerowed.
+    // for (int i = 0; i < buffSize; i++) {
+    //     aBuff[i] =
+    // }
 }
 
 // set loop count to many times buff size to exercise 

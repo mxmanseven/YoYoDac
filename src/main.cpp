@@ -40,15 +40,58 @@ void initEncoder() {
 #define CHARACTERISTIC_COMMAND_MODE_UUID "beb5483e-36e1-4688-b7f5-ea07361b26a8"
 #define CHARACTERISTIC_SAMPLE_UUID       "cda2ac87-84a9-4cbc-8de8-f0285889a4e9"
                                     
+
+BLECharacteristic *pCharacteristicCommandMode;
+BLECharacteristic *pCharacteristicSample;
+
 class CallbackCommandMode: public BLECharacteristicCallbacks {
-    void onWrite(BLECharacteristic *pCharacteristicCommandMode) {
-      std::string value = pCharacteristicCommandMode->getValue();
+    void onWrite(BLECharacteristic *characteristic) {
+      std::string value = characteristic->getValue();
 
       if (value.length() > 0) {
         Serial.println("*#*#*#");
         Serial.print("New command: ");
-        for (int i = 0; i < value.length(); i++)
+        char commandMode = 'a'; 
+        for (int i = 0; i < value.length(); i++) {
           Serial.print(value[i]);
+          if(i == 0) {
+            commandMode = value[i];
+          }
+        }
+
+        // Zero out encoder
+        if(commandMode == 'Z') {
+          // 1 set sample count to zero
+          // 2 empty buff
+          // 3 clear file
+          
+          Encoder::zeroCount();
+          buff.ZeroOut();
+          fileKnh.deleteFile(SD, FILE_PATH);
+        }
+
+        // Last sample
+        if(commandMode == 'L') {
+          // get last sample
+          // send to ble client
+
+          // get buffer lock
+          Sample lastSample = buff.lastSample;
+
+          // knh todo test!
+          std::string ss = std::string(
+              (char*) SampleToString(lastSample).c_str(), 
+              strlen(SampleToString(lastSample).c_str()));
+
+          pCharacteristicSample->setValue(ss);
+        }
+
+        // Download file, one sample at a time. the last message will be empty.
+        if(commandMode == 'D') {
+          // set flag for main loop to do work
+          // open file, send one sample at a time
+          // last sample is empty to indicate download is done.  
+        }
 
         Serial.println();
         Serial.println("*********");
@@ -70,9 +113,6 @@ class CallbackSample: public BLECharacteristicCallbacks {
       }
     }
 };
-
-BLECharacteristic *pCharacteristicCommandMode;
-BLECharacteristic *pCharacteristicSample;
 
 void initCommandModeCharacteristic(BLEService *pService) {
   pCharacteristicCommandMode = pService->createCharacteristic(
