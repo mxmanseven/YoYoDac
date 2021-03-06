@@ -49,7 +49,6 @@ class CallbackCommandMode: public BLECharacteristicCallbacks {
       std::string value = characteristic->getValue();
 
       if (value.length() > 0) {
-        Serial.println("*#*#*#");
         Serial.print("New command: ");
         char commandMode = 'a'; 
         for (int i = 0; i < value.length(); i++) {
@@ -58,6 +57,7 @@ class CallbackCommandMode: public BLECharacteristicCallbacks {
             commandMode = value[i];
           }
         }
+        Serial.println("");
 
         // Zero out encoder
         if(commandMode == 'Z') {
@@ -82,6 +82,9 @@ class CallbackCommandMode: public BLECharacteristicCallbacks {
           std::string ss = std::string(
               (char*) SampleToString(lastSample).c_str(), 
               strlen(SampleToString(lastSample).c_str()));
+
+          Serial.print("last sample ");
+          Serial.println(SampleToString(lastSample));
 
           pCharacteristicSample->setValue(ss);
         }
@@ -114,30 +117,6 @@ class CallbackSample: public BLECharacteristicCallbacks {
     }
 };
 
-void initCommandModeCharacteristic(BLEService *pService) {
-  pCharacteristicCommandMode = pService->createCharacteristic(
-                                         CHARACTERISTIC_COMMAND_MODE_UUID,
-                                         BLECharacteristic::PROPERTY_READ |
-                                         BLECharacteristic::PROPERTY_WRITE
-                                       );
-
-  pCharacteristicCommandMode->setCallbacks(new CallbackCommandMode());
-
-  pCharacteristicCommandMode->setValue("Hello World");
-}
-
-void initCommandSample(BLEService *pService) {
-  pCharacteristicSample = pService->createCharacteristic(
-                                         CHARACTERISTIC_SAMPLE_UUID,
-                                         BLECharacteristic::PROPERTY_READ |
-                                         BLECharacteristic::PROPERTY_WRITE
-                                       );
-
-  pCharacteristicSample->setCallbacks(new CallbackCommandMode());
-
-  pCharacteristicSample->setValue("Hello World");
-}
-
 void initBle() {
   Serial.println("1- Download and install an BLE scanner app in your phone");
   Serial.println("2- Scan for BLE devices in the app");
@@ -149,9 +128,6 @@ void initBle() {
   BLEServer *pServer = BLEDevice::createServer();
   BLEService *pService = pServer->createService(SERVICE_UUID);
   
-  initCommandModeCharacteristic(pService);
-  initCommandSample(pService);
-
   pCharacteristicCommandMode = pService->createCharacteristic(
                                          CHARACTERISTIC_COMMAND_MODE_UUID,
                                          BLECharacteristic::PROPERTY_READ |
@@ -236,22 +212,18 @@ void loop() {
   int timerExeCountLoc = 0;
 
   delay(1000);
-  Serial.println(millis());
+//  Serial.println(millis());
 
-  uint32_t m = millis();
-  uint32_t m2 = m * 2;
-  Serial.println(m, HEX);
-  pCharacteristicCommandMode->setValue(m);
-  pCharacteristicSample->setValue(m2);
+  // uint32_t m = millis();
+  // uint32_t m2 = m * 2;
+  // Serial.println(m, HEX);
+  // pCharacteristicCommandMode->setValue(m);
+  // pCharacteristicSample->setValue(m2);
 
 
   digitalWrite(LED_BUILTIN_PIN, HIGH);
   delay(1000);
   digitalWrite(LED_BUILTIN_PIN, LOW);
-
-  bool isMore = false;
-  Sample s = buff.GetNext(isMore);
-  Serial.println(s.sample);
 
   portENTER_CRITICAL_ISR(&timerMux);
   isBuffFullLoc = isBuffFull;
