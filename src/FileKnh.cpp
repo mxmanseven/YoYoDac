@@ -115,16 +115,11 @@ void FileKnh::appendBuffToFile(
 
   Sample sample;
   bool isMore = true;
+  // empty the one full buffer 
+  // (we keep two buffers so that we can empty one while writing to the other)
   while (isMore) {
-    sample = buff.GetNext(isMore);
-    
-    String v = SampleToString(sample);
-      // String(sample.mills)
-      // + "\t" + String(sample.sample)
-      // + "\r\n";
-    
-    //Serial.println(v);
-    
+    sample = buff.GetNext(isMore);    
+    String v = SampleToString(sample);    
     file.print(v);
     // if(file.print(v)) {
     //   Serial.println("Message appended");

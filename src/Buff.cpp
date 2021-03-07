@@ -72,6 +72,10 @@ Sample Buff::GetNext(bool& isMore) {
 }
 
 void Buff::ZeroOut() {
+    Sample value;
+    value.mills = 0;
+    value.sample = 0;
+    lastSample = value;
     aHead = 0;
     aTail = 0;
     aIsFull = false;

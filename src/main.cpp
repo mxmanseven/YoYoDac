@@ -20,26 +20,27 @@ const byte encoderPinB = 26;
 // const byte encoderPinA = 12; // 12 is used for the sd card and cannot also be used for the encoder.
 // const byte encoderPinB = 16;
 
-volatile uint32_t count = 0;
-uint32_t protectedCount = 0;
-uint32_t previousCount = 0;
-
 const char* FILE_PATH = "/data.txt";
+
+// when uploading file with BLE 
+// avoid writing to file and buff
+bool uploadFile = false;
+
+// record samples at regular interval with a timer
+hw_timer_t * timer = NULL;
+portMUX_TYPE timerMux = portMUX_INITIALIZER_UNLOCKED;
+
+volatile bool isBuffFull = false;
+volatile int timerExpCunt = 0;
 
 Buff buff;
 FileKnh fileKnh;
 
-void initEncoder() {
-  Encoder::InitEncoder(encoderPinA, encoderPinB, LED_BUILTIN_PIN);
-}
-
 // See the following for generating UUIDs:
 // https://www.uuidgenerator.net/
-
 #define SERVICE_UUID        "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
 #define CHARACTERISTIC_COMMAND_MODE_UUID "beb5483e-36e1-4688-b7f5-ea07361b26a8"
 #define CHARACTERISTIC_SAMPLE_UUID       "cda2ac87-84a9-4cbc-8de8-f0285889a4e9"
-                                    
 
 BLECharacteristic *pCharacteristicCommandMode;
 BLECharacteristic *pCharacteristicSample;
@@ -61,13 +62,11 @@ class CallbackCommandMode: public BLECharacteristicCallbacks {
 
         // Zero out encoder
         if(commandMode == 'Z') {
-          // 1 set sample count to zero
-          // 2 empty buff
-          // 3 clear file
-          
+          portENTER_CRITICAL_ISR(&timerMux);
           Encoder::zeroCount();
           buff.ZeroOut();
           fileKnh.deleteFile(SD, FILE_PATH);
+          portEXIT_CRITICAL_ISR(&timerMux);
         }
 
         // Last sample
@@ -75,8 +74,9 @@ class CallbackCommandMode: public BLECharacteristicCallbacks {
           // get last sample
           // send to ble client
 
-          // get buffer lock
+          portENTER_CRITICAL_ISR(&timerMux);
           Sample lastSample = buff.lastSample;
+          portEXIT_CRITICAL_ISR(&timerMux);
 
           // knh todo test!
           std::string ss = std::string(
@@ -93,7 +93,10 @@ class CallbackCommandMode: public BLECharacteristicCallbacks {
         if(commandMode == 'D') {
           // set flag for main loop to do work
           // open file, send one sample at a time
-          // last sample is empty to indicate download is done.  
+          // last sample is empty to indicate download is done.          
+          portENTER_CRITICAL_ISR(&timerMux);
+          uploadFile = true;
+          portEXIT_CRITICAL_ISR(&timerMux);
         }
 
         Serial.println();
@@ -150,16 +153,13 @@ void initBle() {
   pAdvertising->start();
 }
 
-hw_timer_t * timer = NULL;
-portMUX_TYPE timerMux = portMUX_INITIALIZER_UNLOCKED;
-
-volatile bool isBuffFull = false;
-volatile bool timerTriggered = false;
-
-volatile int timerExpCunt = 0;
+void initEncoder() {
+  Encoder::InitEncoder(encoderPinA, encoderPinB, LED_BUILTIN_PIN);
+}
 
 void IRAM_ATTR onTimer() {
   portENTER_CRITICAL_ISR(&timerMux);
+  if (uploadFile == true) return; // don't collect samples while downloading
   timerExpCunt++;
   Sample s;
   s.sample = Encoder::getCount();
@@ -167,8 +167,6 @@ void IRAM_ATTR onTimer() {
   bool isFullLoc = false;
   buff.Push(s, isFullLoc);
   if (isFullLoc) isBuffFull = true;
-
-  timerTriggered = true;
   portEXIT_CRITICAL_ISR(&timerMux);
 }
 
@@ -189,10 +187,7 @@ void setup() {
   Serial.println("in setup");
 
    pinMode(LED_BUILTIN_PIN, OUTPUT);
-  // pinMode(LED_CAMERA_BUILTIN_PIN, OUTPUT);
-
    digitalWrite(LED_BUILTIN_PIN, LOW);
-  // digitalWrite(LED_CAMERA_BUILTIN_PIN, LOW);
 
    initEncoder();
 
@@ -209,6 +204,7 @@ void setup() {
 
 void loop() {
   bool isBuffFullLoc = false;
+  bool uploadFileLoc = false;
   int timerExeCountLoc = 0;
 
   delay(1000);
@@ -220,13 +216,13 @@ void loop() {
   // pCharacteristicCommandMode->setValue(m);
   // pCharacteristicSample->setValue(m2);
 
-
   digitalWrite(LED_BUILTIN_PIN, HIGH);
   delay(1000);
   digitalWrite(LED_BUILTIN_PIN, LOW);
 
   portENTER_CRITICAL_ISR(&timerMux);
   isBuffFullLoc = isBuffFull;
+  uploadFileLoc = uploadFile;
   timerExeCountLoc = timerExpCunt;
   portEXIT_CRITICAL_ISR(&timerMux);
 
@@ -238,6 +234,31 @@ void loop() {
 
     portENTER_CRITICAL_ISR(&timerMux);
     isBuffFull = false;
+    portEXIT_CRITICAL_ISR(&timerMux);
+  }
+
+  if (uploadFileLoc) {
+    // open file
+    // send one line at a time via ble
+    
+   File file = SD.open(FILE_PATH, FILE_READ);
+    if(!file) {
+      Serial.println("Failed to open file for appending");
+      return;
+    }
+
+    String line = "";
+
+    while (file.available()) {
+      line = file.readStringUntil('\n');
+      Serial.print(line);
+      // KNH TODO send line to ble
+    }
+    file.close();
+    SD.remove(FILE_PATH);
+    
+    portENTER_CRITICAL_ISR(&timerMux);
+    uploadFile = false;
     portEXIT_CRITICAL_ISR(&timerMux);
   }
 }

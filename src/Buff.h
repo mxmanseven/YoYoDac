@@ -4,7 +4,7 @@
 #include <Arduino.h>
 
 struct Sample {
-    uint32_t sample;
+    int32_t sample;
     uint32_t mills;
 };
 
