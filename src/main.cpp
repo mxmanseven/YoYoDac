@@ -18,9 +18,9 @@ const char* FILE_PATH = "/data.txt";
 // avoid writing to file and buff
 bool uploadFile = false;
 
-// record samples at regular interval with a timer
-hw_timer_t * timer = NULL;
-portMUX_TYPE timerMux = portMUX_INITIALIZER_UNLOCKED;
+// record samples at regular interval with a encoderTimer
+hw_timer_t * encoderTimer = NULL;
+portMUX_TYPE encoderTimerMux = portMUX_INITIALIZER_UNLOCKED;
 
 volatile bool isBuffFull = false;
 volatile int timerExpCunt = 0;
@@ -54,11 +54,11 @@ class CallbackCommandMode: public BLECharacteristicCallbacks {
 
         // Zero out encoder
         if(commandMode == 'Z') {
-          portENTER_CRITICAL_ISR(&timerMux);
+          portENTER_CRITICAL_ISR(&encoderTimerMux);
           Encoder::zeroCount();
           buff.ZeroOut();
           fileKnh.deleteFile(SD, FILE_PATH);
-          portEXIT_CRITICAL_ISR(&timerMux);
+          portEXIT_CRITICAL_ISR(&encoderTimerMux);
         }
 
         // Last sample
@@ -66,9 +66,9 @@ class CallbackCommandMode: public BLECharacteristicCallbacks {
           // get last sample
           // send to ble client
 
-          portENTER_CRITICAL_ISR(&timerMux);
+          portENTER_CRITICAL_ISR(&encoderTimerMux);
           Sample lastSample = buff.lastSample;
-          portEXIT_CRITICAL_ISR(&timerMux);
+          portEXIT_CRITICAL_ISR(&encoderTimerMux);
 
           // knh todo test!
           std::string ss = std::string(
@@ -86,9 +86,9 @@ class CallbackCommandMode: public BLECharacteristicCallbacks {
           // set flag for main loop to do work
           // open file, send one sample at a time
           // last sample is empty to indicate download is done.          
-          portENTER_CRITICAL_ISR(&timerMux);
+          portENTER_CRITICAL_ISR(&encoderTimerMux);
           uploadFile = true;
-          portEXIT_CRITICAL_ISR(&timerMux);
+          portEXIT_CRITICAL_ISR(&encoderTimerMux);
         }
 
         Serial.println();
@@ -149,8 +149,8 @@ void initEncoder() {
   Encoder::InitEncoder(encoderPinA, encoderPinB, LED_BUILTIN_PIN);
 }
 
-void IRAM_ATTR onTimer() {
-  portENTER_CRITICAL_ISR(&timerMux);
+void IRAM_ATTR onEncoderTimer() {
+  portENTER_CRITICAL_ISR(&encoderTimerMux);
   if (uploadFile == true) return; // don't collect samples while downloading
   timerExpCunt++;
   Sample s;
@@ -159,25 +159,27 @@ void IRAM_ATTR onTimer() {
   bool isFullLoc = false;
   buff.Push(s, isFullLoc);
   if (isFullLoc) isBuffFull = true;
-  portEXIT_CRITICAL_ISR(&timerMux);
+  portEXIT_CRITICAL_ISR(&encoderTimerMux);
 }
 
-void initTimer() {
+void initEncoderTimer() {
+  // log encoder count every time this encoderTimer expires
+  // instead of logging for each encoder change so that the log interval is consistant.
   // https://techtutorialsx.com/2017/10/07/esp32-arduino-timer-interrupts/
   int timerHdId = 0;
   int timerPrescaller = 80;  // 80,000,000 base hz -> 1,000,000
   //int interruptAtScalledTickes = 5000; // 1,000,000 / 5,000 -> 200, some how this results in a timer each 5ms.
   int interruptAtScalledTickes = 10000; //  some how this results in a timer each 10ms, with prescaler of 80.
   //int interruptAtScalledTickes = 1000; //  some how this results in a timer each 1ms, with prescaler of 80.
-  timer = timerBegin(timerHdId, timerPrescaller, true);
-  timerAttachInterrupt(timer, &onTimer, true);
-  timerAlarmWrite(timer, interruptAtScalledTickes, true);
-  timerAlarmEnable(timer);
+  encoderTimer = timerBegin(timerHdId, timerPrescaller, true);
+  timerAttachInterrupt(encoderTimer, &onEncoderTimer, true);
+  timerAlarmWrite(encoderTimer, interruptAtScalledTickes, true);
+  timerAlarmEnable(encoderTimer);
 }
 
 void setup() {
   Serial.begin(115200);
-  delay(2000);
+  delay(5000);
 
   Serial.println("in setup");
 
@@ -189,34 +191,33 @@ void setup() {
   fileKnh.initSdFs();
   fileKnh.writeFile(SD, FILE_PATH, "");
 
-  initTimer();
+  initEncoderTimer();
 
-  //initBle();
+  initBle();
   Serial.println("exiting setup");
 }
 
 void loop() {
   bool isBuffFullLoc = false;
   bool uploadFileLoc = false;
-  int timerExeCountLoc = 0;
+  //int timerExeCountLoc = 0;
 
-  portENTER_CRITICAL_ISR(&timerMux);
+  portENTER_CRITICAL_ISR(&encoderTimerMux);
   isBuffFullLoc = isBuffFull;
   uploadFileLoc = uploadFile;
-  timerExeCountLoc = timerExpCunt;
-  portEXIT_CRITICAL_ISR(&timerMux);
+  //timerExeCountLoc = timerExpCunt;
+  portEXIT_CRITICAL_ISR(&encoderTimerMux);
 
-  Serial.println("timer exec count " + String(timerExeCountLoc));
-
-  Serial.println("Encoder count: " + String(Encoder::getCount()));
+  // Serial.println("encoderTimer exec count " + String(timerExeCountLoc));
+  // Serial.println("Encoder count: " + String(Encoder::getCount()));
 
   if (isBuffFullLoc) {
     Serial.println("Buff is full, writing to file, ms: " + String(millis()));
     fileKnh.appendBuffToFile(SD, FILE_PATH, buff);
 
-    portENTER_CRITICAL_ISR(&timerMux);
+    portENTER_CRITICAL_ISR(&encoderTimerMux);
     isBuffFull = false;
-    portEXIT_CRITICAL_ISR(&timerMux);
+    portEXIT_CRITICAL_ISR(&encoderTimerMux);
   }
 
   if (uploadFileLoc) {
@@ -239,8 +240,8 @@ void loop() {
     file.close();
     SD.remove(FILE_PATH);
     
-    portENTER_CRITICAL_ISR(&timerMux);
+    portENTER_CRITICAL_ISR(&encoderTimerMux);
     uploadFile = false;
-    portEXIT_CRITICAL_ISR(&timerMux);
+    portEXIT_CRITICAL_ISR(&encoderTimerMux);
   }
 }
