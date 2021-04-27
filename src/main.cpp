@@ -71,14 +71,19 @@ class CallbackCommandMode: public BLECharacteristicCallbacks {
           portEXIT_CRITICAL_ISR(&encoderTimerMux);
 
           // knh todo test!
-          std::string ss = std::string(
-              (char*) SampleToString(lastSample).c_str(), 
-              strlen(SampleToString(lastSample).c_str()));
+          // std::string ss = std::string(
+          //     (char*) SampleToString(lastSample).c_str(), 
+          //     strlen(SampleToString(lastSample).c_str()));
 
-          Serial.print("last sample ");
-          Serial.println(SampleToString(lastSample));
+          String count = String(Encoder::getCount());
+          Serial.println("BLE Encoder count (setting sample value to this): " + count);
 
-          pCharacteristicSample->setValue(ss);
+          //std::string countStd = std::string();
+
+          // Serial.print("last sample ");
+          // Serial.println(SampleToString(lastSample));
+
+          pCharacteristicSample->setValue(count.c_str());
         }
 
         // Download file, one sample at a time. the last message will be empty.
@@ -98,34 +103,31 @@ class CallbackCommandMode: public BLECharacteristicCallbacks {
 };
 
 class CallbackSample: public BLECharacteristicCallbacks {
-    void onWrite(BLECharacteristic *pCharacteristicCommandMode) {
-      std::string value = pCharacteristicCommandMode->getValue();
+    // void onRead(BLECharacteristic *pCharacteristicCommandMode) {
+    //   std::string value = pCharacteristicCommandMode->getValue();
 
-      if (value.length() > 0) {
-        Serial.println("sample update");
-        for (int i = 0; i < value.length(); i++)
-          Serial.print(value[i]);
+    //   if (value.length() > 0) {
+    //     Serial.println("sample update");
+    //     for (int i = 0; i < value.length(); i++)
+    //       Serial.print(value[i]);
 
-        Serial.println();
-        Serial.println("*********");
-      }
-    }
+    //     Serial.println();
+    //     Serial.println("*********");
+    //   }
+    // }
 };
 
 void initBle() {
-  Serial.println("1- Download and install an BLE scanner app in your phone");
-  Serial.println("2- Scan for BLE devices in the app");
-  Serial.println("3- Connect to MyESP32");
-  Serial.println("4- Go to CUSTOM CHARACTERISTIC in CUSTOM SERVICE and write something");
-  Serial.println("5- See the magic =) ):");
-
   BLEDevice::init("YoYo DAC");
+  BLEAddress bleAddress = BLEDevice::getAddress();
+  Serial.println("ble Addr: " + String(bleAddress.toString().c_str()));
+
   BLEServer *pServer = BLEDevice::createServer();
   BLEService *pService = pServer->createService(SERVICE_UUID);
   
   pCharacteristicCommandMode = pService->createCharacteristic(
                                          CHARACTERISTIC_COMMAND_MODE_UUID,
-                                         BLECharacteristic::PROPERTY_READ |
+                                         //BLECharacteristic::PROPERTY_READ |
                                          BLECharacteristic::PROPERTY_WRITE
                                        );
   pCharacteristicCommandMode->setCallbacks(new CallbackCommandMode());
@@ -133,10 +135,10 @@ void initBle() {
   
   pCharacteristicSample = pService->createCharacteristic(
                                          CHARACTERISTIC_SAMPLE_UUID,
-                                         BLECharacteristic::PROPERTY_READ |
-                                         BLECharacteristic::PROPERTY_WRITE
+                                         BLECharacteristic::PROPERTY_READ 
+                                         //BLECharacteristic::PROPERTY_WRITE
                                        );
-  pCharacteristicCommandMode->setCallbacks(new CallbackSample());
+  //pCharacteristicSample->setCallbacks(new CallbackSample());
   pCharacteristicSample->setValue("sample");
 
   pService->start();
