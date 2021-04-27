@@ -24,16 +24,20 @@ void IRAM_ATTR Encoder::isrA() {
   portEXIT_CRITICAL_ISR(&Encoder::mux);
 }
 
-// // rotory b chanel
-// void IRAM_ATTR  isrB() {
-//   if (digitalRead(encoderPinA) == digitalRead(encoderPinB)) {
-//     count ++;
-//     digitalWrite(LED_BUILTIN_PIN, HIGH);
-//   } else {
-//     count --;
-//     digitalWrite(LED_BUILTIN_PIN, LOW);
-//   }
-// }
+// rotory b chanel
+void IRAM_ATTR  isrB() {
+  int a = digitalRead(Encoder::encoderAPin);
+  int b = digitalRead(Encoder::encoderBPin);
+
+  portENTER_CRITICAL_ISR(&Encoder::mux);
+  if(a == b) {
+    Encoder::count ++;
+    digitalWrite(Encoder::ledPin, HIGH);
+  } else {
+    Encoder::count --;
+    digitalWrite(Encoder::ledPin, LOW);
+  }
+}
 
 void Encoder::InitEncoder(
         int aPin,

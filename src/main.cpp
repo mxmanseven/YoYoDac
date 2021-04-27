@@ -8,17 +8,9 @@
 #include "Encoder.h"
 #include "FileKnh.h"
 
-const int LED_BUILTIN_PIN = 2; // non-cam
-//const int LED_BUILTIN_PIN = 33; // cam
-
-const int LED_CAMERA_BUILTIN_PIN = 4;
+const int LED_BUILTIN_PIN = 16;
 const byte encoderPinA = 27;
 const byte encoderPinB = 26;
-
-// cam ish:
-// need some more free pins for get working. can use pins dedicated to the camera wiht a fpc breakout.
-// const byte encoderPinA = 12; // 12 is used for the sd card and cannot also be used for the encoder.
-// const byte encoderPinB = 16;
 
 const char* FILE_PATH = "/data.txt";
 
@@ -173,10 +165,13 @@ void IRAM_ATTR onTimer() {
 void initTimer() {
   // https://techtutorialsx.com/2017/10/07/esp32-arduino-timer-interrupts/
   int timerHdId = 0;
-  int timerPrescaller = 80;
+  int timerPrescaller = 80;  // 80,000,000 base hz -> 1,000,000
+  //int interruptAtScalledTickes = 5000; // 1,000,000 / 5,000 -> 200, some how this results in a timer each 5ms.
+  int interruptAtScalledTickes = 10000; //  some how this results in a timer each 10ms, with prescaler of 80.
+  //int interruptAtScalledTickes = 1000; //  some how this results in a timer each 1ms, with prescaler of 80.
   timer = timerBegin(timerHdId, timerPrescaller, true);
   timerAttachInterrupt(timer, &onTimer, true);
-  timerAlarmWrite(timer, 10000, true);
+  timerAlarmWrite(timer, interruptAtScalledTickes, true);
   timerAlarmEnable(timer);
 }
 
@@ -186,19 +181,17 @@ void setup() {
 
   Serial.println("in setup");
 
-   pinMode(LED_BUILTIN_PIN, OUTPUT);
-   digitalWrite(LED_BUILTIN_PIN, LOW);
+  pinMode(LED_BUILTIN_PIN, OUTPUT);
+  digitalWrite(LED_BUILTIN_PIN, LOW);
 
-   initEncoder();
+  initEncoder();
 
   fileKnh.initSdFs();
   fileKnh.writeFile(SD, FILE_PATH, "");
 
   initTimer();
 
-  initBle();
-
-  delay(2000);
+  //initBle();
   Serial.println("exiting setup");
 }
 
@@ -207,19 +200,6 @@ void loop() {
   bool uploadFileLoc = false;
   int timerExeCountLoc = 0;
 
-  delay(1000);
-//  Serial.println(millis());
-
-  // uint32_t m = millis();
-  // uint32_t m2 = m * 2;
-  // Serial.println(m, HEX);
-  // pCharacteristicCommandMode->setValue(m);
-  // pCharacteristicSample->setValue(m2);
-
-  digitalWrite(LED_BUILTIN_PIN, HIGH);
-  delay(1000);
-  digitalWrite(LED_BUILTIN_PIN, LOW);
-
   portENTER_CRITICAL_ISR(&timerMux);
   isBuffFullLoc = isBuffFull;
   uploadFileLoc = uploadFile;
@@ -227,6 +207,8 @@ void loop() {
   portEXIT_CRITICAL_ISR(&timerMux);
 
   Serial.println("timer exec count " + String(timerExeCountLoc));
+
+  Serial.println("Encoder count: " + String(Encoder::getCount()));
 
   if (isBuffFullLoc) {
     Serial.println("Buff is full, writing to file, ms: " + String(millis()));
