@@ -1,0 +1,61 @@
+#include "BleServerKnh.h"
+
+//String BleServerKnh::commandReceived = "";
+
+BleServerKnh::BleServerKnh() {
+    //commandReceived = "";
+}
+
+class CallbackCommandMode: public BLECharacteristicCallbacks {
+    void onWrite(BLECharacteristic *characteristic) {
+      std::string value = characteristic->getValue();
+
+      //BleServerKnh::commandReceived = String(value.c_str());
+
+      if (value.length() > 0) {
+        Serial.print("New command: ");
+        char commandMode = 'a'; 
+        for (int i = 0; i < value.length(); i++) {
+          Serial.print(value[i]);
+          if(i == 0) {
+            commandMode = value[i];
+          }
+        }
+        Serial.println("");
+
+        Serial.println();
+        Serial.println("*********");
+      }
+    }
+};
+
+void BleServerKnh::initBle() {
+  BLEDevice::init("YoYo DAC");
+  BLEAddress bleAddress = BLEDevice::getAddress();
+  Serial.println("ble Addr: " + String(bleAddress.toString().c_str()));
+
+  pServer = BLEDevice::createServer();
+  pService = pServer->createService(SERVICE_UUID);
+  
+  pCharacteristicCommandMode = pService->createCharacteristic(
+                                         CHARACTERISTIC_COMMAND_MODE_UUID,
+                                         BLECharacteristic::PROPERTY_WRITE
+                                       );
+  pCharacteristicCommandMode->setCallbacks(new CallbackCommandMode());
+  
+  pCharacteristicSample = pService->createCharacteristic(
+                                         CHARACTERISTIC_SAMPLE_UUID,
+                                         BLECharacteristic::PROPERTY_READ 
+                                       );
+  pCharacteristicSample->setValue("sample");
+
+  pService->start();
+
+  pAdvertising = pServer->getAdvertising();
+  pAdvertising->start();
+}
+
+String BleServerKnh::GetCommand() {
+    std::string value = pCharacteristicCommandMode->getValue();
+    return String(value.c_str());
+}

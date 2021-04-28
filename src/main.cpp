@@ -8,6 +8,8 @@
 #include "Encoder.h"
 #include "FileKnh.h"
 
+#include "BleServerKnh.h"
+
 const int LED_BUILTIN_PIN = 16;
 const byte encoderPinA = 27;
 const byte encoderPinB = 26;
@@ -27,129 +29,7 @@ volatile int timerExpCunt = 0;
 
 Buff buff;
 FileKnh fileKnh;
-
-// See the following for generating UUIDs:
-// https://www.uuidgenerator.net/
-#define SERVICE_UUID        "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
-#define CHARACTERISTIC_COMMAND_MODE_UUID "beb5483e-36e1-4688-b7f5-ea07361b26a8"
-#define CHARACTERISTIC_SAMPLE_UUID       "cda2ac87-84a9-4cbc-8de8-f0285889a4e9"
-
-BLECharacteristic *pCharacteristicCommandMode;
-BLECharacteristic *pCharacteristicSample;
-
-class CallbackCommandMode: public BLECharacteristicCallbacks {
-    void onWrite(BLECharacteristic *characteristic) {
-      std::string value = characteristic->getValue();
-
-      if (value.length() > 0) {
-        Serial.print("New command: ");
-        char commandMode = 'a'; 
-        for (int i = 0; i < value.length(); i++) {
-          Serial.print(value[i]);
-          if(i == 0) {
-            commandMode = value[i];
-          }
-        }
-        Serial.println("");
-
-        // Zero out encoder
-        if(commandMode == 'Z') {
-          portENTER_CRITICAL_ISR(&encoderTimerMux);
-          Encoder::zeroCount();
-          buff.ZeroOut();
-          fileKnh.deleteFile(SD, FILE_PATH);
-          portEXIT_CRITICAL_ISR(&encoderTimerMux);
-        }
-
-        // Last sample
-        if(commandMode == 'L') {
-          // get last sample
-          // send to ble client
-
-          portENTER_CRITICAL_ISR(&encoderTimerMux);
-          Sample lastSample = buff.lastSample;
-          portEXIT_CRITICAL_ISR(&encoderTimerMux);
-
-          // knh todo test!
-          // std::string ss = std::string(
-          //     (char*) SampleToString(lastSample).c_str(), 
-          //     strlen(SampleToString(lastSample).c_str()));
-
-          String count = String(Encoder::getCount());
-          Serial.println("BLE Encoder count (setting sample value to this): " + count);
-
-          //std::string countStd = std::string();
-
-          // Serial.print("last sample ");
-          // Serial.println(SampleToString(lastSample));
-
-          pCharacteristicSample->setValue(count.c_str());
-        }
-
-        // Download file, one sample at a time. the last message will be empty.
-        if(commandMode == 'D') {
-          // set flag for main loop to do work
-          // open file, send one sample at a time
-          // last sample is empty to indicate download is done.          
-          portENTER_CRITICAL_ISR(&encoderTimerMux);
-          uploadFile = true;
-          portEXIT_CRITICAL_ISR(&encoderTimerMux);
-        }
-
-        Serial.println();
-        Serial.println("*********");
-      }
-    }
-};
-
-class CallbackSample: public BLECharacteristicCallbacks {
-    // void onRead(BLECharacteristic *pCharacteristicCommandMode) {
-    //   std::string value = pCharacteristicCommandMode->getValue();
-
-    //   if (value.length() > 0) {
-    //     Serial.println("sample update");
-    //     for (int i = 0; i < value.length(); i++)
-    //       Serial.print(value[i]);
-
-    //     Serial.println();
-    //     Serial.println("*********");
-    //   }
-    // }
-};
-
-void initBle() {
-  BLEDevice::init("YoYo DAC");
-  BLEAddress bleAddress = BLEDevice::getAddress();
-  Serial.println("ble Addr: " + String(bleAddress.toString().c_str()));
-
-  BLEServer *pServer = BLEDevice::createServer();
-  BLEService *pService = pServer->createService(SERVICE_UUID);
-  
-  pCharacteristicCommandMode = pService->createCharacteristic(
-                                         CHARACTERISTIC_COMMAND_MODE_UUID,
-                                         //BLECharacteristic::PROPERTY_READ |
-                                         BLECharacteristic::PROPERTY_WRITE
-                                       );
-  pCharacteristicCommandMode->setCallbacks(new CallbackCommandMode());
-  pCharacteristicCommandMode->setValue("command mode");
-  
-  pCharacteristicSample = pService->createCharacteristic(
-                                         CHARACTERISTIC_SAMPLE_UUID,
-                                         BLECharacteristic::PROPERTY_READ 
-                                         //BLECharacteristic::PROPERTY_WRITE
-                                       );
-  //pCharacteristicSample->setCallbacks(new CallbackSample());
-  pCharacteristicSample->setValue("sample");
-
-  pService->start();
-
-  BLEAdvertising *pAdvertising = pServer->getAdvertising();
-  pAdvertising->start();
-}
-
-void initEncoder() {
-  Encoder::InitEncoder(encoderPinA, encoderPinB, LED_BUILTIN_PIN);
-}
+BleServerKnh bleServerKnh;
 
 void IRAM_ATTR onEncoderTimer() {
   portENTER_CRITICAL_ISR(&encoderTimerMux);
@@ -188,14 +68,15 @@ void setup() {
   pinMode(LED_BUILTIN_PIN, OUTPUT);
   digitalWrite(LED_BUILTIN_PIN, LOW);
 
-  initEncoder();
+  Encoder::InitEncoder(encoderPinA, encoderPinB, LED_BUILTIN_PIN);
 
   fileKnh.initSdFs();
   fileKnh.writeFile(SD, FILE_PATH, "");
 
   initEncoderTimer();
 
-  initBle();
+  bleServerKnh.initBle();
+
   Serial.println("exiting setup");
 }
 
@@ -210,8 +91,8 @@ void loop() {
   //timerExeCountLoc = timerExpCunt;
   portEXIT_CRITICAL_ISR(&encoderTimerMux);
 
-  // Serial.println("encoderTimer exec count " + String(timerExeCountLoc));
-  // Serial.println("Encoder count: " + String(Encoder::getCount()));
+  //Serial.println("encoderTimer exec count " + String(timerExeCountLoc));
+  Serial.println("Encoder count: " + String(Encoder::getCount()));
 
   if (isBuffFullLoc) {
     Serial.println("Buff is full, writing to file, ms: " + String(millis()));
@@ -221,6 +102,11 @@ void loop() {
     isBuffFull = false;
     portEXIT_CRITICAL_ISR(&encoderTimerMux);
   }
+
+  String bleCommand = bleServerKnh.GetCommand();
+  Serial.println("ble command from main: " + bleCommand);
+  delay(2000);
+
 
   if (uploadFileLoc) {
     // open file

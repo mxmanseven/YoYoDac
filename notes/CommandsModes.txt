@@ -1,5 +1,7 @@
 let's start simple:
 
+test ble with: chrome://bluetooth-internals/#devices/
+
 1) Command/Mode
     two commands:
       1) download file
