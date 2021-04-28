@@ -14,12 +14,8 @@ class CallbackCommandMode: public BLECharacteristicCallbacks {
 
       if (value.length() > 0) {
         Serial.print("New command: ");
-        char commandMode = 'a'; 
         for (int i = 0; i < value.length(); i++) {
           Serial.print(value[i]);
-          if(i == 0) {
-            commandMode = value[i];
-          }
         }
         Serial.println("");
 

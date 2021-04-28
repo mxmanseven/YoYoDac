@@ -15,10 +15,11 @@ const byte encoderPinA = 27;
 const byte encoderPinB = 26;
 
 const char* FILE_PATH = "/data.txt";
+File file;
 
 // when uploading file with BLE 
 // avoid writing to file and buff
-bool uploadFile = false;
+bool uploadFileToBle = false;
 
 // record samples at regular interval with a encoderTimer
 hw_timer_t * encoderTimer = NULL;
@@ -33,7 +34,7 @@ BleServerKnh bleServerKnh;
 
 void IRAM_ATTR onEncoderTimer() {
   portENTER_CRITICAL_ISR(&encoderTimerMux);
-  if (uploadFile == true) return; // don't collect samples while downloading
+  if (uploadFileToBle == true) return; // don't collect samples while downloading
   timerExpCunt++;
   Sample s;
   s.sample = Encoder::getCount();
@@ -51,7 +52,8 @@ void initEncoderTimer() {
   int timerHdId = 0;
   int timerPrescaller = 80;  // 80,000,000 base hz -> 1,000,000
   //int interruptAtScalledTickes = 5000; // 1,000,000 / 5,000 -> 200, some how this results in a timer each 5ms.
-  int interruptAtScalledTickes = 10000; //  some how this results in a timer each 10ms, with prescaler of 80.
+  int interruptAtScalledTickes = 100000; //  some how this results in a timer each 100ms, with prescaler of 80.
+  //int interruptAtScalledTickes = 10000; //  some how this results in a timer each 10ms, with prescaler of 80.
   //int interruptAtScalledTickes = 1000; //  some how this results in a timer each 1ms, with prescaler of 80.
   encoderTimer = timerBegin(timerHdId, timerPrescaller, true);
   timerAttachInterrupt(encoderTimer, &onEncoderTimer, true);
@@ -82,19 +84,15 @@ void setup() {
 
 void loop() {
   bool isBuffFullLoc = false;
-  bool uploadFileLoc = false;
-  //int timerExeCountLoc = 0;
 
   portENTER_CRITICAL_ISR(&encoderTimerMux);
   isBuffFullLoc = isBuffFull;
-  uploadFileLoc = uploadFile;
-  //timerExeCountLoc = timerExpCunt;
   portEXIT_CRITICAL_ISR(&encoderTimerMux);
 
-  //Serial.println("encoderTimer exec count " + String(timerExeCountLoc));
-  Serial.println("Encoder count: " + String(Encoder::getCount()));
+  //Serial.println("Encoder count: " + String(Encoder::getCount()));
 
-  if (isBuffFullLoc) {
+  if (isBuffFullLoc && uploadFileToBle == false) {
+    // write buffer to file unless we are uploading file to BLE
     Serial.println("Buff is full, writing to file, ms: " + String(millis()));
     fileKnh.appendBuffToFile(SD, FILE_PATH, buff);
 
@@ -104,32 +102,49 @@ void loop() {
   }
 
   String bleCommand = bleServerKnh.GetCommand();
-  Serial.println("ble command from main: " + bleCommand);
-  delay(2000);
+  if (bleCommand != "") {
+    Serial.println("ble command from main: " + bleCommand);
+  }
 
-
-  if (uploadFileLoc) {
-    // open file
-    // send one line at a time via ble
-    
-   File file = SD.open(FILE_PATH, FILE_READ);
-    if(!file) {
-      Serial.println("Failed to open file for appending");
-      return;
+  if (bleCommand == "Zero") {  
+    portENTER_CRITICAL_ISR(&encoderTimerMux);
+    Encoder::zeroCount();
+    buff.ZeroOut();
+    fileKnh.deleteFile(SD, FILE_PATH);
+    uploadFileToBle = false;
+    portEXIT_CRITICAL_ISR(&encoderTimerMux);
+  }
+  else if (bleCommand == "GetLastSample") {
+    String count = String(Encoder::getCount());
+    Serial.println("Encoder count: " + count);
+    bleServerKnh.pCharacteristicSample->setValue(count.c_str());
+  }
+  else if (bleCommand == "Download") {
+    if (!file) {      
+      portENTER_CRITICAL_ISR(&encoderTimerMux);
+      uploadFileToBle = true;
+      portEXIT_CRITICAL_ISR(&encoderTimerMux);
+      file = SD.open(FILE_PATH, FILE_READ);
+        if(!file) {
+          Serial.println("Failed to open file for appending");
+        }
     }
 
-    String line = "";
-
-    while (file.available()) {
+    if (file.available()) {
+      String line = "";
       line = file.readStringUntil('\n');
       Serial.print(line);
-      // KNH TODO send line to ble
+      bleServerKnh.pCharacteristicSample->setValue(line.c_str());
     }
-    file.close();
-    SD.remove(FILE_PATH);
-    
-    portENTER_CRITICAL_ISR(&encoderTimerMux);
-    uploadFile = false;
-    portEXIT_CRITICAL_ISR(&encoderTimerMux);
+    else {
+      bleServerKnh.pCharacteristicSample->setValue("");
+      file.close();
+      SD.remove(FILE_PATH);
+      buff.ZeroOut();
+      
+      portENTER_CRITICAL_ISR(&encoderTimerMux);
+      uploadFileToBle = false;
+      portEXIT_CRITICAL_ISR(&encoderTimerMux);
+    }
   }
 }
