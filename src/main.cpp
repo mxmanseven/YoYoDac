@@ -147,4 +147,7 @@ void loop() {
       portEXIT_CRITICAL_ISR(&encoderTimerMux);
     }
   }
+  
+  // clear the command so that we can process the next one.
+  bleServerKnh.pCharacteristicCommandMode->setValue("");
 }
