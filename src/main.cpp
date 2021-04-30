@@ -55,8 +55,9 @@ void initEncoderTimer() {
   int timerHdId = 0;
   int timerPrescaller = 80;  // 80,000,000 base hz -> 1,000,000
   //int interruptAtScalledTickes = 5000; // 1,000,000 / 5,000 -> 200, some how this results in a timer each 5ms.
-  //int interruptAtScalledTickes = 100000; //  some how this results in a timer each 100ms, with prescaler of 80.
-  int interruptAtScalledTickes = 10000; //  some how this results in a timer each 10ms, with prescaler of 80.
+  //int interruptAtScalledTickes = 1000000; //  some how this results in a timer each 1000ms, with prescaler of 80.
+  int interruptAtScalledTickes = 100000; //  some how this results in a timer each 100ms, with prescaler of 80.
+  //int interruptAtScalledTickes = 10000; //  some how this results in a timer each 10ms, with prescaler of 80.
   //int interruptAtScalledTickes = 1000; //  some how this results in a timer each 1ms, with prescaler of 80.
   encoderTimer = timerBegin(timerHdId, timerPrescaller, true);
   timerAttachInterrupt(encoderTimer, &onEncoderTimer, true);
@@ -75,11 +76,11 @@ class CallbackNextLineOfData: public BLECharacteristicCallbacks {
       timerDetachInterrupt(encoderTimer);
       Encoder::DisableInterrupts();
 
-      Serial.println("Opening file");
-
       portENTER_CRITICAL_ISR(&encoderTimerMux);
       uploadFileToBle = true;
       portEXIT_CRITICAL_ISR(&encoderTimerMux);
+
+      Serial.println("Opening file");
       file = SD.open(FILE_PATH, FILE_READ);
       
         if(!file) {
@@ -104,9 +105,9 @@ class CallbackNextLineOfData: public BLECharacteristicCallbacks {
       SD.remove(FILE_PATH);
       buff.ZeroOut();
       
-      Serial.println("File closed and deleted.");
+      Serial.println("File closed and deleted, turing on interupts again.");
 
-      initEncoderTimer();
+      timerAlarmEnable(encoderTimer);
       Encoder::AttachInterrupts();
       portENTER_CRITICAL_ISR(&encoderTimerMux);
       uploadFileToBle = false;
@@ -177,41 +178,6 @@ void loop() {
   //   uploadFileToBle = false;
   //   portEXIT_CRITICAL_ISR(&encoderTimerMux);
   // }
-  // else if (bleCommand == "GetLastSample") {
-  //   String count = String(Encoder::getCount());
-  //   Serial.println("Encoder count: " + count);
-  //   bleServerKnh.pCharacteristicSample->setValue(count.c_str());
-  // }
-   
-  // if (bleCommand == "D") {
-  //   Serial.println("received download command");
-  //   if (!file) {      
-  //     portENTER_CRITICAL_ISR(&encoderTimerMux);
-  //     uploadFileToBle = true;
-  //     portEXIT_CRITICAL_ISR(&encoderTimerMux);
-  //     file = SD.open(FILE_PATH, FILE_READ);
-  //       if(!file) {
-  //         Serial.println("Failed to open file for appending");
-  //       }
-  //   }
-
-    // if (file.available()) {
-    //   String line = "";
-    //   line = file.readStringUntil('\n');
-    //   Serial.print(line);
-    //   bleServerKnh.pCharacteristicSample->setValue(line.c_str());
-    // }
-    // else {
-    //   bleServerKnh.pCharacteristicSample->setValue("");
-    //   file.close();
-    //   SD.remove(FILE_PATH);
-    //   buff.ZeroOut();
-      
-    //   portENTER_CRITICAL_ISR(&encoderTimerMux);
-    //   uploadFileToBle = false;
-    //   portEXIT_CRITICAL_ISR(&encoderTimerMux);
-    // }
-  //}
   
   // // clear the command so that we can process the next one.
   // bleServerKnh.pCharacteristicCommandMode->setValue("");

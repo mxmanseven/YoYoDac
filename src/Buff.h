@@ -19,6 +19,9 @@ class Buff
     void ZeroOut();
     void Test();
     static const int buffSize = 1024;
+    // use a small buffer so that data is writen to disk quickly
+    // to make debugging reading data from disk more easy
+    //static const int buffSize = 10;
     Sample aBuff[buffSize];
     Sample bBuff[buffSize];
 
