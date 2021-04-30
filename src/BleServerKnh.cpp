@@ -25,6 +25,15 @@ class CallbackCommandMode: public BLECharacteristicCallbacks {
     }
 };
 
+class CallbackLastEncoderCount: public BLECharacteristicCallbacks {
+    void onRead(BLECharacteristic *characteristic) {
+        uint32_t m = millis();
+        String mString = String(m);
+        Serial.println("Ble get last encoder count callback: " + mString);
+        characteristic->setValue(mString.c_str());
+    }
+};
+
 void BleServerKnh::initBle() {
   BLEDevice::init("YoYo DAC");
   BLEAddress bleAddress = BLEDevice::getAddress();
@@ -34,15 +43,17 @@ void BleServerKnh::initBle() {
   pService = pServer->createService(SERVICE_UUID);
   
   pCharacteristicCommandMode = pService->createCharacteristic(
-                                         CHARACTERISTIC_COMMAND_MODE_UUID,
-                                         BLECharacteristic::PROPERTY_WRITE
-                                       );
+    CHARACTERISTIC_COMMAND_MODE_UUID,
+    BLECharacteristic::PROPERTY_WRITE);
+
   pCharacteristicCommandMode->setCallbacks(new CallbackCommandMode());
   
   pCharacteristicSample = pService->createCharacteristic(
-                                         CHARACTERISTIC_SAMPLE_UUID,
-                                         BLECharacteristic::PROPERTY_READ 
-                                       );
+    CHARACTERISTIC_LAST_ENCODER_COUNT_UUID,
+    BLECharacteristic::PROPERTY_READ);
+
+  pCharacteristicSample->setCallbacks( new CallbackLastEncoderCount());
+
   pCharacteristicSample->setValue("sample");
 
   pService->start();

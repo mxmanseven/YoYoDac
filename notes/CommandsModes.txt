@@ -4,15 +4,22 @@ test ble with: chrome://bluetooth-internals/#devices/
 
 pin out: https://github.com/EzSBC/ESP32_Dev/blob/main/Pinout.jpg
 
-1) Command/Mode
-    two commands:
-      1) download file
-      2) zero distance and reset file
+1) Client set Command/Mode
+    1) zero distance and reset file 
+        and start recording again
+
+2) Client Read:
+    1) Next Line of File
+        if File not open, open it
+        Get line of file
+        set chart value to line
+        if file not available, 
+          close and zero out
+    2) Last Encoder count
+        Get the last encoder count
       
       
-2) sample
-    send all samples form file, one at a time. Clear file when done.
-      it might be easier for client to pull all data 
-      instead of doing notifications.
-      
+
+
+
       
