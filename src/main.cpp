@@ -79,7 +79,7 @@ void setup() {
 
   bleServerKnh.initBle();
 
-  Serial.println("exiting setup");
+  Serial.println("exiting setup 816");
 }
 
 void loop() {
@@ -104,50 +104,56 @@ void loop() {
   String bleCommand = bleServerKnh.GetCommand();
   if (bleCommand != "") {
     Serial.println("ble command from main: " + bleCommand);
+    // clear the command so that we can process the next one.
+    bleServerKnh.pCharacteristicCommandMode->setValue("");
+    
+    uint32_t m = millis();
+    Serial.println("ble command from main mills: " + String(m));
+    bleServerKnh.pCharacteristicSample->setValue(m);
   }
 
-  if (bleCommand == "Zero") {  
-    portENTER_CRITICAL_ISR(&encoderTimerMux);
-    Encoder::zeroCount();
-    buff.ZeroOut();
-    fileKnh.deleteFile(SD, FILE_PATH);
-    uploadFileToBle = false;
-    portEXIT_CRITICAL_ISR(&encoderTimerMux);
-  }
-  else if (bleCommand == "GetLastSample") {
-    String count = String(Encoder::getCount());
-    Serial.println("Encoder count: " + count);
-    bleServerKnh.pCharacteristicSample->setValue(count.c_str());
-  }
-  else if (bleCommand == "Download") {
-    if (!file) {      
-      portENTER_CRITICAL_ISR(&encoderTimerMux);
-      uploadFileToBle = true;
-      portEXIT_CRITICAL_ISR(&encoderTimerMux);
-      file = SD.open(FILE_PATH, FILE_READ);
-        if(!file) {
-          Serial.println("Failed to open file for appending");
-        }
-    }
+  // if (bleCommand == "Zero") {  
+  //   portENTER_CRITICAL_ISR(&encoderTimerMux);
+  //   Encoder::zeroCount();
+  //   buff.ZeroOut();
+  //   fileKnh.deleteFile(SD, FILE_PATH);
+  //   uploadFileToBle = false;
+  //   portEXIT_CRITICAL_ISR(&encoderTimerMux);
+  // }
+  // else if (bleCommand == "GetLastSample") {
+  //   String count = String(Encoder::getCount());
+  //   Serial.println("Encoder count: " + count);
+  //   bleServerKnh.pCharacteristicSample->setValue(count.c_str());
+  // }
+  // else if (bleCommand == "Download") {
+  //   if (!file) {      
+  //     portENTER_CRITICAL_ISR(&encoderTimerMux);
+  //     uploadFileToBle = true;
+  //     portEXIT_CRITICAL_ISR(&encoderTimerMux);
+  //     file = SD.open(FILE_PATH, FILE_READ);
+  //       if(!file) {
+  //         Serial.println("Failed to open file for appending");
+  //       }
+  //   }
 
-    if (file.available()) {
-      String line = "";
-      line = file.readStringUntil('\n');
-      Serial.print(line);
-      bleServerKnh.pCharacteristicSample->setValue(line.c_str());
-    }
-    else {
-      bleServerKnh.pCharacteristicSample->setValue("");
-      file.close();
-      SD.remove(FILE_PATH);
-      buff.ZeroOut();
+  //   if (file.available()) {
+  //     String line = "";
+  //     line = file.readStringUntil('\n');
+  //     Serial.print(line);
+  //     bleServerKnh.pCharacteristicSample->setValue(line.c_str());
+  //   }
+  //   else {
+  //     bleServerKnh.pCharacteristicSample->setValue("");
+  //     file.close();
+  //     SD.remove(FILE_PATH);
+  //     buff.ZeroOut();
       
-      portENTER_CRITICAL_ISR(&encoderTimerMux);
-      uploadFileToBle = false;
-      portEXIT_CRITICAL_ISR(&encoderTimerMux);
-    }
-  }
+  //     portENTER_CRITICAL_ISR(&encoderTimerMux);
+  //     uploadFileToBle = false;
+  //     portEXIT_CRITICAL_ISR(&encoderTimerMux);
+  //   }
+  // }
   
-  // clear the command so that we can process the next one.
-  bleServerKnh.pCharacteristicCommandMode->setValue("");
+  // // clear the command so that we can process the next one.
+  // bleServerKnh.pCharacteristicCommandMode->setValue("");
 }
