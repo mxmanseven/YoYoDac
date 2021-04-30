@@ -61,6 +61,16 @@ void initEncoderTimer() {
   timerAlarmEnable(encoderTimer);
 }
 
+class CallbackNextLineOfData: public BLECharacteristicCallbacks {
+    void onRead(BLECharacteristic *characteristic) {
+        //uint32_t m = millis();
+        int m = Encoder::getCount();
+        String mString = "Main callback mills: " + String(m);
+        Serial.println(mString);
+        characteristic->setValue(mString.c_str());
+    }
+};
+
 void setup() {
   Serial.begin(115200);
   delay(5000);
@@ -70,6 +80,7 @@ void setup() {
   pinMode(LED_BUILTIN_PIN, OUTPUT);
   digitalWrite(LED_BUILTIN_PIN, LOW);
 
+  // knh todo - change Encoder to a non-static class - maybe
   Encoder::InitEncoder(encoderPinA, encoderPinB, LED_BUILTIN_PIN);
 
   fileKnh.initSdFs();
@@ -77,9 +88,11 @@ void setup() {
 
   initEncoderTimer();
 
+  // set the callback before initliazing
+  bleServerKnh.callbackNextLineOfDate = new CallbackNextLineOfData();
   bleServerKnh.initBle();
 
-  Serial.println("exiting setup 816");
+  Serial.println("exiting setup 1044");
 }
 
 void loop() {
@@ -106,10 +119,6 @@ void loop() {
     Serial.println("ble command from main: " + bleCommand);
     // clear the command so that we can process the next one.
     bleServerKnh.pCharacteristicCommandMode->setValue("");
-    
-    uint32_t m = millis();
-    Serial.println("ble command from main mills: " + String(m));
-    bleServerKnh.pCharacteristicSample->setValue(m);
   }
 
   // if (bleCommand == "Zero") {  

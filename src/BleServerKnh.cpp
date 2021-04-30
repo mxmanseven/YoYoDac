@@ -9,25 +9,13 @@ BleServerKnh::BleServerKnh() {
 class CallbackCommandMode: public BLECharacteristicCallbacks {
     void onWrite(BLECharacteristic *characteristic) {
       std::string value = characteristic->getValue();
-
-      //BleServerKnh::commandReceived = String(value.c_str());
-
-      if (value.length() > 0) {
-        Serial.print("New command: ");
-        for (int i = 0; i < value.length(); i++) {
-          Serial.print(value[i]);
-        }
-        Serial.println("");
-
-        Serial.println();
-        Serial.println("*********");
-      }
     }
 };
 
 class CallbackLastEncoderCount: public BLECharacteristicCallbacks {
     void onRead(BLECharacteristic *characteristic) {
-        uint32_t m = millis();
+        //uint32_t m = millis();
+        int m = Encoder::getCount();
         String mString = String(m);
         Serial.println("Ble get last encoder count callback: " + mString);
         characteristic->setValue(mString.c_str());
@@ -45,16 +33,19 @@ void BleServerKnh::initBle() {
   pCharacteristicCommandMode = pService->createCharacteristic(
     CHARACTERISTIC_COMMAND_MODE_UUID,
     BLECharacteristic::PROPERTY_WRITE);
-
   pCharacteristicCommandMode->setCallbacks(new CallbackCommandMode());
   
   pCharacteristicSample = pService->createCharacteristic(
     CHARACTERISTIC_LAST_ENCODER_COUNT_UUID,
     BLECharacteristic::PROPERTY_READ);
-
-  pCharacteristicSample->setCallbacks( new CallbackLastEncoderCount());
-
+  pCharacteristicSample->setCallbacks(new CallbackLastEncoderCount());
   pCharacteristicSample->setValue("sample");
+
+  pCharacteristicNextLineOfData = pService->createCharacteristic(
+    CHARACTERISTIC_NEXT_LINE_OF_DATA_UUID,
+    BLECharacteristic::PROPERTY_READ);
+  pCharacteristicNextLineOfData->setCallbacks(callbackNextLineOfDate);
+
 
   pService->start();
 
