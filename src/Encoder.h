@@ -18,10 +18,14 @@ class Encoder {
         int ledPinp
     );
 
+    static void AttachInterrupts();
+    static void DisableInterrupts();
+
     static int getCount();
     static void zeroCount();
 
     static void IRAM_ATTR isrA();
+    static void IRAM_ATTR isrB();
 
     //private:
     Encoder(); // dont allow an instance of this class

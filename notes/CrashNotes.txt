@@ -1,0 +1,509 @@
+there are two types of errors:
+    1) run time error in bluetooth onRead callback
+    2) start up error.
+
+1) https://github.com/espressif/esp-idf/issues/4876 
+    sugests to set CONFIG_ESP_INT_WDT_TIMEOUT_MS to something like 500ms
+
+Success with no file opps:
+
+Buff is full, writing to file, ms: 367519
+Buff is full, writing to file, ms: 377939
+Buff is full, writing to file, ms: 388359
+[D][BLEDevice.cpp:102] gattServerEventHandler(): gattServerEventHandler [esp_gatt_if: 4] ... Unknown
+[V][BLEUtils.cpp:1530] dumpGattServerEvent(): GATT ServerEvent: Unknown
+[V][BLEUtils.cpp:1720] dumpGattServerEvent(): dumpGattServerEvent: *** NOT CODED ***
+[V][BLEServer.cpp:144] handleGATTServerEvent(): >> handleGATTServerEvent: Unknown
+[V][BLECharacteristic.cpp:198] handleGATTServerEvent(): >> handleGATTServerEvent: Unknown
+[V][BLECharacteristic.cpp:456] handleGATTServerEvent(): << handleGATTServerEvent
+[V][BLECharacteristic.cpp:198] handleGATTServerEvent(): >> handleGATTServerEvent: Unknown
+[V][BLECharacteristic.cpp:456] handleGATTServerEvent(): << handleGATTServerEvent
+[V][BLECharacteristic.cpp:198] handleGATTServerEvent(): >> handleGATTServerEvent: Unknown
+[D][BLECharacteristic.cpp:361] handleGATTServerEvent(): mtu value: 516
+[D][BLECharacteristic.cpp:363] handleGATTServerEvent(): Sending a response (esp_ble_gatts_send_response)
+
+Main callback mills: 3178
+[V][BLECharacteristic.cpp:650] setValue(): >> setValue: length=25, data=4d61696e2063616c6c6261636b206d696c6c733a2033313738, characteristic UUID=05435f99-ce01-4905-a845-e863cebf3654[V][FreeRTOS.cpp:189] take(): Semaphore taking: name: SetValue (0x3ffe8dc4), owner: <N/A> for <Unknown>
+[V][FreeRTOS.cpp:198] take(): Semaphore taken:  name: SetValue (0x3ffe8dc4), owner: <Unknown>
+[V][FreeRTOS.cpp:143] give(): Semaphore giving: name: SetValue (0x3ffe8dc4), owner: <Unknown>
+[V][BLECharacteristic.cpp:659] setValue(): << setValue
+[D][BLECharacteristic.cpp:407] handleGATTServerEvent():  - Data: length=25, data=4d61696e2063616c6c6261636b206d696c6c733a2033313738, offset=0
+[V][BLECharacteristic.cpp:456] handleGATTServerEvent(): << handleGATTServerEvent
+[V][BLEServer.cpp:277] handleGATTServerEvent(): << handleGATTServerEvent
+[D][BLEDevice.cpp:102] gattServerEventHandler(): gattServerEventHandler [esp_gatt_if: 4] ... Unknown
+[V][BLEUtils.cpp:1530] dumpGattServerEvent(): GATT ServerEvent: Unknown
+[V][BLEUtils.cpp:1720] dumpGattServerEvent(): dumpGattServerEvent: *** NOT CODED ***
+[V][BLEServer.cpp:144] handleGATTServerEvent(): >> handleGATTServerEvent: Unknown
+[V][BLECharacteristic.cpp:198] handleGATTServerEvent(): >> handleGATTServerEvent: Unknown
+[V][BLECharacteristic.cpp:456] handleGATTServerEvent(): << handleGATTServerEvent
+[V][BLECharacteristic.cpp:198] handleGATTServerEvent(): >> handleGATTServerEvent: Unknown
+[V][BLECharacteristic.cpp:456] handleGATTServerEvent(): << handleGATTServerEvent
+[V][BLECharacteristic.cpp:198] handleGATTServerEvent(): >> handleGATTServerEvent: Unknown
+[V][BLECharacteristic.cpp:456] handleGATTServerEvent(): << handleGATTServerEvent
+[V][BLEServer.cpp:277] handleGATTServerEvent(): << handleGATTServerEvent
+Buff is full, writing to file, ms: 398779
+Buff is full, writing to file, ms: 409199
+Buff is full, writing to file, ms: 419619
+
+
+
+
+Fail:
+
+Opening file
+Opened file.
+Main callback mills: 0
+[V][BLECharacteristic.cpp:650] setValue(): >> setValue: length=22, data=4d61696e2063616c6c6261636b206d696c6c733a2030, characteristic UUID=05435f99-ce01-4905-a845-e863cebf3654
+[V][FreeRTOS.cpp:189] take(): Semaphore taking: name: SetValue (0x3ffe8d88), owner: <N/A> for <Unknown>
+[V][FreeRTOS.cpp:198] take(): Semaphore taken:  name: SetValue (0x3ffe8d88), owner: <Unknown>
+[V][FreeRTOS.cpp:143] give(): Semaphore giving: name: SetValue (0x3ffe8d88), owner: <Unknown>
+[V][BLECharacteristic.cpp:659] setValue(): << setValue
+[D][BLECharacteristic.cpp:407] handleGATTServerEvent():  - Data: length=22, data=4d61696e2063616c6c6261636b206d696c6c733a2030, offset=0
+[V][BLECharacteristic.cpp:456] handleGATTServerEvent(): << handleGATTServerEvent
+[V][BLEServer.cpp:277] handleGATTServerEvent(): << handleGATTServerEvent
+[D][BLEDevice.cpp:102] gattServerEventHandler(): gattServerEventHandler [esp_gatt_if: 4] ... Unknown
+[V][BLEUtils.cpp:1530] dumpGattServerEvent(): GATT ServerEvent: Unknown
+[V][BLEUtils.cpp:1720] dumpGattServerEvent(): dumpGattServerEvent: *** NOT CODED ***
+[V][BLEServer.cpp:144] handleGATTServerEvent(): >> handleGATTServerEvent: Unknown
+[V][BLECharacteristic.cpp:198] handleGATTServerEvent(): >> handleGATTServerEvent: Unknown
+[V][BLECharacteristic.cpp:456] handleGATTServerEvent(): << handleGATTServerEvent
+[V][BLECharacteristic.cpp:198] handleGATTServerEvent(): >> handleGATTServerEvent: Unknown
+[V][BLECharacteristic.cpp:456] handleGATTServerEvent(): << handleGATTServerEvent
+[V][BLECharacteristic.cpp:198] handleGATTServerEvent(): >> handleGATTServerEvent: Unknown
+[V][BLECharacteristic.cpp:456] handleGATTServerEvent(): << handleGATTServerEvent
+[V][BLEServer.cpp:277] handleGATTServerEvent(): << handleGATTServerEvent
+Guru Meditation Error: Core  1 panic'ed (Interrupt wdt timeout on CPU1)
+Core 1 register dump:
+PC      : 0x40181438  PS      : 0x00060134  A0      : 0x800d7262  A1      : 0x3ffcb4b0
+A2      : 0x3ffcb514  A3      : 0x3ffe86d8  A4      : 0x00000001  A5      : 0x3ffbf9f0
+A6      : 0x00000001  A7      : 0x3ffcb664  A8      : 0x80181498  A9      : 0x00000000
+A10     : 0x3ffcb514  A11     : 0x3ffe86e0  A12     : 0x3ffe86e0  A13     : 0x00000000
+A14     : 0x00000020  A15     : 0x3ffc9660  SAR     : 0x0000001b  EXCCAUSE: 0x00000006  
+EXCVADDR: 0x00000000  LBEG    : 0x400014fd  LEND    : 0x4000150d  LCOUNT  : 0xffffffff
+
+ELF file SHA256: 0000000000000000
+
+Backtrace: 0x40181438:0x3ffcb4b0 0x400d725f:0x3ffcb4d0 0x400d2db0:0x3ffcb4f0 0x400d1cdb:0x3ffcb510 0x400d229a:0x3ffcb550 0x400dcccc:0x3ffcb5b0 0x40090612:0x3ffcb5d0
+
+Core 0 register dump:
+PC      : 0x401882ae  PS      : 0x00060034  A0      : 0x801683ea  A1      : 0x3ffbc130
+A2      : 0x00000000  A3      : 0x00000001  A4      : 0x80090824  A5      : 0x3ffd5950  
+A6      : 0x00000000  A7      : 0x3ffbbe20  A8      : 0x80167642  A9      : 0x3ffbc100
+A10     : 0x00000000  A11     : 0x00060a23  A12     : 0x00000005  A13     : 0x00000020
+A14     : 0x00000020  A15     : 0x00000001  SAR     : 0x00000000  EXCCAUSE: 0x00000006
+EXCVADDR: 0x00000000  LBEG    : 0x00000000  LEND    : 0x00000000  LCOUNT  : 0x00000000
+
+ELF file SHA256: 0000000000000000
+
+Backtrace: 0x401882ae:0x3ffbc130 0x401683e7:0x3ffbc150 0x40091be1:0x3ffbc170 0x40090612:0x3ffbc190
+
+Rebooting...
+ets Jul 29 2019 12:21:46
+
+
+
+
+
+Guru Meditation Error: Core  1 panic'ed (Interrupt wdt timeout on CPU1)
+Core 1 register dump:
+PC      : 0x40091436  PS      : 0x00060134  A0      : 0x800d1eb8  A1      : 0x3ffcb520  
+A2      : 0x3ffbdd68  A3      : 0x0000abab  A4      : 0x003fffff  A5      : 0x00000001  
+A6      : 0x00060123  A7      : 0x0000cdcd  A8      : 0x800d9170  A9      : 0x3ffcb510
+A10     : 0x3ffcb55c  A11     : 0x3ffcb51c  A12     : 0x00060120  A13     : 0x3ffcb430
+A14     : 0x00000000  A15     : 0x3ffc9660  SAR     : 0x0000001b  EXCCAUSE: 0x00000006  
+EXCVADDR: 0x00000000  LBEG    : 0x400014fd  LEND    : 0x4000150d  LCOUNT  : 0xffffffff
+
+ELF file SHA256: 0000000000000000
+
+Backtrace: 0x40091436:0x3ffcb520 0x400d1eb5:0x3ffcb550 0x400db140:0x3ffcb5b0 0x40090612:0x3ffcb5d0
+
+Core 0 register dump:
+PC      : 0x40186372  PS      : 0x00060234  A0      : 0x801667d6  A1      : 0x3ffbc130
+A2      : 0x00000000  A3      : 0x00000001  A4      : 0x80090824  A5      : 0x3ffbc050
+A6      : 0x00000000  A7      : 0x3ffbbe20  A8      : 0x80165a2e  A9      : 0x3ffbc100  
+A10     : 0x00000000  A11     : 0x00000001  A12     : 0x80090824  A13     : 0x3ffd5930
+A14     : 0x00000000  A15     : 0x3ffbbe20  SAR     : 0x00000000  EXCCAUSE: 0x00000006
+EXCVADDR: 0x00000000  LBEG    : 0x00000000  LEND    : 0x00000000  LCOUNT  : 0x00000000
+
+ELF file SHA256: 0000000000000000
+
+Backtrace: 0x40186372:0x3ffbc130 0x401667d3:0x3ffbc150 0x40091be1:0x3ffbc170 0x40090612:0x3ffbc190
+
+Rebooting...
+ets Jul 29 2019 12:21:46
+
+rst:0xc (SW_CPU_RESET),boot:0x13 (SPI_FAST_FLASH_BOOT)
+configsip: 0, SPIWP:0xee
+clk_drv:0x00,q_drv:0x00,d_drv:0x00,cs0_drv:0x00,hd_drv:0x00,wp_drv:0x00
+mode:DIO, clock div:2
+load:0x3fff0018,len:4
+load:0x3fff001c,len:1044
+load:0x40078000,len:10124
+load:0x40080400,len:5828
+entry 0x400806a8
+in setup
+Initializing SD card...
+Write failed
+Guru Meditation Error: Core  1 panic'ed (Cache disabled but cached memory region accessed)
+Core 1 register dump:
+PC      : 0x400d1b10  PS      : 0x00060034  A0      : 0x80081490  A1      : 0x3ffbfa20
+A2      : 0x3ffbdd68  A3      : 0x00000000  A4      : 0x00000400  A5      : 0x3ffcb0b0
+A6      : 0x00000000  A7      : 0x3ffcb0ec  A8      : 0x80081069  A9      : 0x3ffc7d24
+A10     : 0x00000001  A11     : 0x3ffcb664  A12     : 0x00000001  A13     : 0x00000001
+A14     : 0x00060021  A15     : 0x00000000  SAR     : 0x0000001d  EXCCAUSE: 0x00000007  
+EXCVADDR: 0x00000000  LBEG    : 0x4000c2e0  LEND    : 0x4000c2f6  LCOUNT  : 0x00000000
+Core 1 was running in ISR context:
+EPC1    : 0x400957bf  EPC2    : 0x00000000  EPC3    : 0x00000000  EPC4    : 0x400d1b10
+
+ELF file SHA256: 0000000000000000
+
+Backtrace: 0x400d1b10:0x3ffbfa20 0x4008148d:0x3ffbfa50 0x4008dc85:0x3ffbfa70 0x400957bc:0x3ffcb110 0x40095ef1:0x3ffcb130 0x4008e668:0x3ffcb150 0x4017d979:0x3ffcb1c0 0x4017c211:0x3ffcb1e0 0x4017c84d:0x3ffcb200 0x4017b539:0x3ffcb280 0x4017b5eb:0x3ffcb300 0x4017a7b1:0x3ffcb360 0x4017abfd:0x3ffcb3a0 0x40165c8e:0x3ffcb3c0 0x4016608a:0x3ffcb430 0x4016642e:0x3ffcb460 0x400eec97:0x3ffcb490 0x400d97b1:0x3ffcb4b0 0x400d338e:0x3ffcb4f0 0x400d17fa:0x3ffcb520 0x400d1e8d:0x3ffcb580 0x400db12e:0x3ffcb5b0 0x40090612:0x3ffcb5d0
+
+Rebooting...
+ets Jul 29 2019 12:21:46
+
+rst:0x3 (SW_RESET),boot:0x13 (SPI_FAST_FLASH_BOOT)
+configsip: 0, SPIWP:0xee
+clk_drv:0x00,q_drv:0x00,d_drv:0x00,cs0_drv:0x00,hd_drv:0x00,wp_drv:0x00
+mode:DIO, clock div:2
+load:0x3fff0018,len:4
+load:0x3fff001c,len:1044
+load:0x40078000,len:10124
+load:0x40080400,len:5828
+entry 0x400806a8
+in setup
+Initializing SD card...
+Write failed
+Guru Meditation Error: Core  1 panic'ed (Cache disabled but cached memory region accessed)
+Core 1 register dump:
+PC      : 0x400d1b10  PS      : 0x00060034  A0      : 0x80081490  A1      : 0x3ffbfa20
+A2      : 0x3ffbdd68  A3      : 0x00000000  A4      : 0x00000400  A5      : 0x00000000
+A6      : 0x3ffc8634  A7      : 0xffffffff  A8      : 0x80081069  A9      : 0x3ffc7d24
+A10     : 0x00000001  A11     : 0x3ffba3d8  A12     : 0x00000001  A13     : 0x00000001
+A14     : 0x00060021  A15     : 0x00000000  SAR     : 0x00000013  EXCCAUSE: 0x00000007  
+EXCVADDR: 0x00000000  LBEG    : 0x00000000  LEND    : 0x00000000  LCOUNT  : 0x00000000
+Core 1 was running in ISR context:
+EPC1    : 0x4008de99  EPC2    : 0x00000000  EPC3    : 0x00000000  EPC4    : 0x400d1b10
+
+ELF file SHA256: 0000000000000000
+
+Backtrace: 0x400d1b10:0x3ffbfa20 0x4008148d:0x3ffbfa50 0x4008dc85:0x3ffbfa70 0x4008de96:0x3ffba300 0x40084b1f:0x3ffba320 0x40090612:0x3ffba340
+
+Rebooting...
+ets Jul 29 2019 12:21:46
+
+rst:0x3 (SW_RESET),boot:0x13 (SPI_FAST_FLASH_BOOT)
+configsip: 0, SPIWP:0xee
+clk_drv:0x00,q_drv:0x00,d_drv:0x00,cs0_drv:0x00,hd_drv:0x00,wp_drv:0x00
+mode:DIO, clock div:2
+load:0x3fff0018,len:4
+load:0x3fff001c,len:1044
+load:0x40078000,len:10124
+load:0x40080400,len:5828
+entry 0x400806a8
+in setup
+Initializing SD card...
+Write failed
+Guru Meditation Error: Core  1 panic'ed (Cache disabled but cached memory region accessed)
+Core 1 register dump:
+PC      : 0x400d1b10  PS      : 0x00060034  A0      : 0x80081490  A1      : 0x3ffbfa20
+A2      : 0x3ffbdd68  A3      : 0x00000000  A4      : 0x00000400  A5      : 0x3ffcb0b0
+A6      : 0x00000000  A7      : 0x3ffcb0ec  A8      : 0x80081069  A9      : 0x3ffc7d24
+A10     : 0x00000001  A11     : 0x3ffcb664  A12     : 0x00000001  A13     : 0x00000001
+A14     : 0x00060021  A15     : 0x00000000  SAR     : 0x0000001d  EXCCAUSE: 0x00000007  
+EXCVADDR: 0x00000000  LBEG    : 0x4000c2e0  LEND    : 0x4000c2f6  LCOUNT  : 0x00000000
+Core 1 was running in ISR context:
+EPC1    : 0x400957bd  EPC2    : 0x00000000  EPC3    : 0x00000000  EPC4    : 0x400d1b10
+
+ELF file SHA256: 0000000000000000
+
+Backtrace: 0x400d1b10:0x3ffbfa20 0x4008148d:0x3ffbfa50 0x4008dc85:0x3ffbfa70 0x400957ba:0x3ffcb110 0x40095ef1:0x3ffcb130 0x4008e668:0x3ffcb150 0x4017d979:0x3ffcb1c0 0x4017c211:0x3ffcb1e0 0x4017c84d:0x3ffcb200 0x4017b539:0x3ffcb280 0x4017b5eb:0x3ffcb300 0x4017a7b1:0x3ffcb360 0x4017abfd:0x3ffcb3a0 0x40165c8e:0x3ffcb3c0 0x4016608a:0x3ffcb430 0x4016642e:0x3ffcb460 0x400eec97:0x3ffcb490 0x400d97b1:0x3ffcb4b0 0x400d338e:0x3ffcb4f0 0x400d17fa:0x3ffcb520 0x400d1e8d:0x3ffcb580 0x400db12e:0x3ffcb5b0 0x40090612:0x3ffcb5d0
+
+Rebooting...
+ets Jul 29 2019 12:21:46
+
+rst:0x3 (SW_RESET),boot:0x13 (SPI_FAST_FLASH_BOOT)
+configsip: 0, SPIWP:0xee
+clk_drv:0x00,q_drv:0x00,d_drv:0x00,cs0_drv:0x00,hd_drv:0x00,wp_drv:0x00
+mode:DIO, clock div:2
+load:0x3fff0018,len:4
+load:0x3fff001c,len:1044
+load:0x40078000,len:10124
+load:0x40080400,len:5828
+entry 0x400806a8
+in setup
+Initializing SD card...
+Write failed
+Guru Meditation Error: Core  1 panic'ed (Cache disabled but cached memory region accessed)
+Core 1 register dump:
+PC      : 0x400d1b10  PS      : 0x00060034  A0      : 0x80081490  A1      : 0x3ffbfa20
+A2      : 0x3ffbdd68  A3      : 0x00000000  A4      : 0x00000400  A5      : 0x3ffcb0b0
+A6      : 0x00000000  A7      : 0x3ffcb0ec  A8      : 0x80081069  A9      : 0x3ffc7d24
+A10     : 0x00000001  A11     : 0x3ffcb664  A12     : 0x00000001  A13     : 0x00000001
+A14     : 0x00060021  A15     : 0x00000000  SAR     : 0x0000001f  EXCCAUSE: 0x00000007  
+EXCVADDR: 0x00000000  LBEG    : 0x4000c2e0  LEND    : 0x4000c2f6  LCOUNT  : 0x00000000
+Core 1 was running in ISR context:
+EPC1    : 0x400957b7  EPC2    : 0x00000000  EPC3    : 0x00000000  EPC4    : 0x400d1b10
+
+ELF file SHA256: 0000000000000000
+
+Backtrace: 0x400d1b10:0x3ffbfa20 0x4008148d:0x3ffbfa50 0x4008dc85:0x3ffbfa70 0x400957b4:0x3ffcb110 0x40095ef1:0x3ffcb130 0x4008e668:0x3ffcb150 0x4017d979:0x3ffcb1c0 0x4017c211:0x3ffcb1e0 0x4017c84d:0x3ffcb200 0x4017b539:0x3ffcb280 0x4017b5eb:0x3ffcb300 0x4017a7b1:0x3ffcb360 0x4017abfd:0x3ffcb3a0 0x40165c8e:0x3ffcb3c0 0x4016608a:0x3ffcb430 0x4016642e:0x3ffcb460 0x400eec97:0x3ffcb490 0x400d97b1:0x3ffcb4b0 0x400d338e:0x3ffcb4f0 0x400d17fa:0x3ffcb520 0x400d1e8d:0x3ffcb580 0x400db12e:0x3ffcb5b0 0x40090612:0x3ffcb5d0
+
+Rebooting...
+ets Jul 29 2019 12:21:46
+
+rst:0x3 (SW_RESET),boot:0x13 (SPI_FAST_FLASH_BOOT)
+configsip: 0, SPIWP:0xee
+clk_drv:0x00,q_drv:0x00,d_drv:0x00,cs0_drv:0x00,hd_drv:0x00,wp_drv:0x00
+mode:DIO, clock div:2
+load:0x3fff0018,len:4
+load:0x3fff001c,len:1044
+load:0x40078000,len:10124
+load:0x40080400,len:5828
+entry 0x400806a8
+in setup
+Initializing SD card...
+Write failed
+Guru Meditation Error: Core  1 panic'ed (Cache disabled but cached memory region accessed)
+Core 1 register dump:
+PC      : 0x400d1b10  PS      : 0x00060034  A0      : 0x80081490  A1      : 0x3ffbfa20
+A2      : 0x3ffbdd68  A3      : 0x00000000  A4      : 0x00000400  A5      : 0x3ffcb0b0
+A6      : 0x00000000  A7      : 0x3ffcb0ec  A8      : 0x80081069  A9      : 0x3ffc7d24
+A10     : 0x00000001  A11     : 0x3ffcb664  A12     : 0x00000001  A13     : 0x00000001
+A14     : 0x00060021  A15     : 0x00000000  SAR     : 0x0000001f  EXCCAUSE: 0x00000007  
+EXCVADDR: 0x00000000  LBEG    : 0x4000c2e0  LEND    : 0x4000c2f6  LCOUNT  : 0x00000000
+Core 1 was running in ISR context:
+EPC1    : 0x400957bd  EPC2    : 0x00000000  EPC3    : 0x00000000  EPC4    : 0x400d1b10
+
+ELF file SHA256: 0000000000000000
+
+Backtrace: 0x400d1b10:0x3ffbfa20 0x4008148d:0x3ffbfa50 0x4008dc85:0x3ffbfa70 0x400957ba:0x3ffcb110 0x40095ef1:0x3ffcb130 0x4008e668:0x3ffcb150 0x4017d979:0x3ffcb1c0 0x4017c211:0x3ffcb1e0 0x4017c84d:0x3ffcb200 0x4017b539:0x3ffcb280 0x4017b5eb:0x3ffcb300 0x4017a7b1:0x3ffcb360 0x4017abfd:0x3ffcb3a0 0x40165c8e:0x3ffcb3c0 0x4016608a:0x3ffcb430 0x4016642e:0x3ffcb460 0x400eec97:0x3ffcb490 0x400d97b1:0x3ffcb4b0 0x400d338e:0x3ffcb4f0 0x400d17fa:0x3ffcb520 0x400d1e8d:0x3ffcb580 0x400db12e:0x3ffcb5b0 0x40090612:0x3ffcb5d0
+
+Rebooting...
+ets Jul 29 2019 12:21:46
+
+rst:0x3 (SW_RESET),boot:0x13 (SPI_FAST_FLASH_BOOT)
+configsip: 0, SPIWP:0xee
+clk_drv:0x00,q_drv:0x00,d_drv:0x00,cs0_drv:0x00,hd_drv:0x00,wp_drv:0x00
+mode:DIO, clock div:2
+load:0x3fff0018,len:4
+load:0x3fff001c,len:1044
+load:0x40078000,len:10124
+load:0x40080400,len:5828
+entry 0x400806a8
+in setup
+Initializing SD card...
+Write failed
+Guru Meditation Error: Core  1 panic'ed (Cache disabled but cached memory region accessed)
+Core 1 register dump:
+PC      : 0x400d1b10  PS      : 0x00060034  A0      : 0x80081490  A1      : 0x3ffbfa20
+A2      : 0x3ffbdd68  A3      : 0x00000000  A4      : 0x00000400  A5      : 0x3ffcb0b0
+A6      : 0x00000000  A7      : 0x3ffcb0ec  A8      : 0x80081069  A9      : 0x3ffc7d24
+A10     : 0x00000001  A11     : 0x3ffcb664  A12     : 0x00000001  A13     : 0x00000001
+A14     : 0x00060021  A15     : 0x00000000  SAR     : 0x0000001f  EXCCAUSE: 0x00000007  
+EXCVADDR: 0x00000000  LBEG    : 0x4000c2e0  LEND    : 0x4000c2f6  LCOUNT  : 0x00000000
+Core 1 was running in ISR context:
+EPC1    : 0x400957bd  EPC2    : 0x00000000  EPC3    : 0x00000000  EPC4    : 0x400d1b10
+
+ELF file SHA256: 0000000000000000
+
+Backtrace: 0x400d1b10:0x3ffbfa20 0x4008148d:0x3ffbfa50 0x4008dc85:0x3ffbfa70 0x400957ba:0x3ffcb110 0x40095ef1:0x3ffcb130 0x4008e668:0x3ffcb150 0x4017d979:0x3ffcb1c0 0x4017c211:0x3ffcb1e0 0x4017c84d:0x3ffcb200 0x4017b539:0x3ffcb280 0x4017b5eb:0x3ffcb300 0x4017a7b1:0x3ffcb360 0x4017abfd:0x3ffcb3a0 0x40165c8e:0x3ffcb3c0 0x4016608a:0x3ffcb430 0x4016642e:0x3ffcb460 0x400eec97:0x3ffcb490 0x400d97b1:0x3ffcb4b0 0x400d338e:0x3ffcb4f0 0x400d17fa:0x3ffcb520 0x400d1e8d:0x3ffcb580 0x400db12e:0x3ffcb5b0 0x40090612:0x3ffcb5d0
+
+Rebooting...
+ets Jul 29 2019 12:21:46
+
+rst:0x3 (SW_RESET),boot:0x13 (SPI_FAST_FLASH_BOOT)
+configsip: 0, SPIWP:0xee
+clk_drv:0x00,q_drv:0x00,d_drv:0x00,cs0_drv:0x00,hd_drv:0x00,wp_drv:0x00
+mode:DIO, clock div:2
+load:0x3fff0018,len:4
+load:0x3fff001c,len:1044
+load:0x40078000,len:10124
+load:0x40080400,len:5828
+entry 0x400806a8
+in setup
+Initializing SD card...
+Write failed
+Guru Meditation Error: Core  1 panic'ed (Cache disabled but cached memory region accessed)
+Core 1 register dump:
+PC      : 0x400d1b10  PS      : 0x00060034  A0      : 0x80081490  A1      : 0x3ffbfa20
+A2      : 0x3ffbdd68  A3      : 0x00000000  A4      : 0x00000400  A5      : 0x00000000
+A6      : 0x3ffc8634  A7      : 0xffffffff  A8      : 0x80081069  A9      : 0x3ffc7d24
+A10     : 0x00000001  A11     : 0x3ffba3d8  A12     : 0x00000001  A13     : 0x00000001
+A14     : 0x00060021  A15     : 0x00000000  SAR     : 0x00000013  EXCCAUSE: 0x00000007  
+EXCVADDR: 0x00000000  LBEG    : 0x00000000  LEND    : 0x00000000  LCOUNT  : 0x00000000
+Core 1 was running in ISR context:
+EPC1    : 0x4008de90  EPC2    : 0x00000000  EPC3    : 0x00000000  EPC4    : 0x400d1b10
+
+ELF file SHA256: 0000000000000000
+
+Backtrace: 0x400d1b10:0x3ffbfa20 0x4008148d:0x3ffbfa50 0x4008dc85:0x3ffbfa70 0x4008de8d:0x3ffba300 0x40084b1f:0x3ffba320 0x40090612:0x3ffba340
+
+Rebooting...
+ets Jul 29 2019 12:21:46
+
+rst:0x3 (SW_RESET),boot:0x13 (SPI_FAST_FLASH_BOOT)
+configsip: 0, SPIWP:0xee
+clk_drv:0x00,q_drv:0x00,d_drv:0x00,cs0_drv:0x00,hd_drv:0x00,wp_drv:0x00
+mode:DIO, clock div:2
+load:0x3fff0018,len:4
+load:0x3fff001c,len:1044
+load:0x40078000,len:10124
+load:0x40080400,len:5828
+entry 0x400806a8
+in setup
+Initializing SD card...
+Write failed
+Guru Meditation Error: Core  1 panic'ed (Cache disabled but cached memory region accessed)
+Core 1 register dump:
+PC      : 0x400d1b10  PS      : 0x00060034  A0      : 0x80081490  A1      : 0x3ffbfa20
+A2      : 0x3ffbdd68  A3      : 0x00000000  A4      : 0x00000400  A5      : 0x3ffcb0b0
+A6      : 0x00000000  A7      : 0x3ffcb0ec  A8      : 0x80081069  A9      : 0x3ffc7d24
+A10     : 0x00000001  A11     : 0x3ffcb664  A12     : 0x00000001  A13     : 0x00000001
+A14     : 0x00060021  A15     : 0x00000000  SAR     : 0x0000001f  EXCCAUSE: 0x00000007  
+EXCVADDR: 0x00000000  LBEG    : 0x4000c2e0  LEND    : 0x4000c2f6  LCOUNT  : 0x00000000
+Core 1 was running in ISR context:
+EPC1    : 0x400957b7  EPC2    : 0x00000000  EPC3    : 0x00000000  EPC4    : 0x400d1b10
+
+ELF file SHA256: 0000000000000000
+
+Backtrace: 0x400d1b10:0x3ffbfa20 0x4008148d:0x3ffbfa50 0x4008dc85:0x3ffbfa70 0x400957b4:0x3ffcb110 0x40095ef1:0x3ffcb130 0x4008e668:0x3ffcb150 0x4017d979:0x3ffcb1c0 0x4017c211:0x3ffcb1e0 0x4017c84d:0x3ffcb200 0x4017b539:0x3ffcb280 0x4017b5eb:0x3ffcb300 0x4017a7b1:0x3ffcb360 0x4017abfd:0x3ffcb3a0 0x40165c8e:0x3ffcb3c0 0x4016608a:0x3ffcb430 0x4016642e:0x3ffcb460 0x400eec97:0x3ffcb490 0x400d97b1:0x3ffcb4b0 0x400d338e:0x3ffcb4f0 0x400d17fa:0x3ffcb520 0x400d1e8d:0x3ffcb580 0x400db12e:0x3ffcb5b0 0x40090612:0x3ffcb5d0
+
+Rebooting...
+ets Jul 29 2019 12:21:46
+
+rst:0x3 (SW_RESET),boot:0x13 (SPI_FAST_FLASH_BOOT)
+configsip: 0, SPIWP:0xee
+clk_drv:0x00,q_drv:0x00,d_drv:0x00,cs0_drv:0x00,hd_drv:0x00,wp_drv:0x00
+mode:DIO, clock div:2
+load:0x3fff0018,len:4
+load:0x3fff001c,len:1044
+load:0x40078000,len:10124
+load:0x40080400,len:5828
+entry 0x400806a8
+in setup
+Initializing SD card...
+Write failed
+Guru Meditation Error: Core  1 panic'ed (Cache disabled but cached memory region accessed)
+Core 1 register dump:
+PC      : 0x400d1b10  PS      : 0x00060034  A0      : 0x80081490  A1      : 0x3ffbfa20
+A2      : 0x3ffbdd68  A3      : 0x00000000  A4      : 0x00000400  A5      : 0x3ffcb0b0
+A6      : 0x00000000  A7      : 0x3ffcb0ec  A8      : 0x80081069  A9      : 0x3ffc7d24
+A10     : 0x00000001  A11     : 0x3ffcb664  A12     : 0x00000001  A13     : 0x00000001
+A14     : 0x00060021  A15     : 0x00000000  SAR     : 0x0000001f  EXCCAUSE: 0x00000007  
+EXCVADDR: 0x00000000  LBEG    : 0x4000c2e0  LEND    : 0x4000c2f6  LCOUNT  : 0x00000000
+Core 1 was running in ISR context:
+EPC1    : 0x400957b4  EPC2    : 0x00000000  EPC3    : 0x00000000  EPC4    : 0x400d1b10
+
+ELF file SHA256: 0000000000000000
+
+Backtrace: 0x400d1b10:0x3ffbfa20 0x4008148d:0x3ffbfa50 0x4008dc85:0x3ffbfa70 0x400957b1:0x3ffcb110 0x40095ef1:0x3ffcb130 0x4008e668:0x3ffcb150 0x4017d979:0x3ffcb1c0 0x4017c211:0x3ffcb1e0 0x4017c84d:0x3ffcb200 0x4017b539:0x3ffcb280 0x4017b5eb:0x3ffcb300 0x4017a7b1:0x3ffcb360 0x4017abfd:0x3ffcb3a0 0x40165c8e:0x3ffcb3c0 0x4016608a:0x3ffcb430 0x4016642e:0x3ffcb460 0x400eec97:0x3ffcb490 0x400d97b1:0x3ffcb4b0 0x400d338e:0x3ffcb4f0 0x400d17fa:0x3ffcb520 0x400d1e8d:0x3ffcb580 0x400db12e:0x3ffcb5b0 0x40090612:0x3ffcb5d0
+
+Rebooting...
+ets Jul 29 2019 12:21:46
+
+rst:0x3 (SW_RESET),boot:0x13 (SPI_FAST_FLASH_BOOT)
+configsip: 0, SPIWP:0xee
+clk_drv:0x00,q_drv:0x00,d_drv:0x00,cs0_drv:0x00,hd_drv:0x00,wp_drv:0x00
+mode:DIO, clock div:2
+load:0x3fff0018,len:4
+load:0x3fff001c,len:1044
+load:0x40078000,len:10124
+load:0x40080400,len:5828
+entry 0x400806a8
+in setup
+Initializing SD card...
+Write failed
+Guru Meditation Error: Core  1 panic'ed (Cache disabled but cached memory region accessed)
+Core 1 register dump:
+PC      : 0x400d1b10  PS      : 0x00060034  A0      : 0x80081490  A1      : 0x3ffbfa20
+A2      : 0x3ffbdd68  A3      : 0x00000000  A4      : 0x00000400  A5      : 0x3ffbfa30
+A6      : 0x3ffbfa78  A7      : 0x00000001  A8      : 0x80081069  A9      : 0x3ffc7d24
+A10     : 0x00000001  A11     : 0x3ffba3d8  A12     : 0x00000001  A13     : 0x00000001
+A14     : 0x00060021  A15     : 0x00000000  SAR     : 0x00000013  EXCCAUSE: 0x00000007  
+EXCVADDR: 0x00000000  LBEG    : 0x00000000  LEND    : 0x00000000  LCOUNT  : 0x00000000
+Core 1 was running in ISR context:
+EPC1    : 0x4008de99  EPC2    : 0x00000000  EPC3    : 0x00000000  EPC4    : 0x400d1b10
+
+ELF file SHA256: 0000000000000000
+
+Backtrace: 0x400d1b10:0x3ffbfa20 0x4008148d:0x3ffbfa50 0x4008dc85:0x3ffbfa70 0x4008de96:0x3ffba300 0x40084b1f:0x3ffba320 0x40090612:0x3ffba340
+
+Rebooting...
+ets Jul 29 2019 12:21:46
+
+rst:0x3 (SW_RESET),boot:0x13 (SPI_FAST_FLASH_BOOT)
+configsip: 0, SPIWP:0xee
+clk_drv:0x00,q_drv:0x00,d_drv:0x00,cs0_drv:0x00,hd_drv:0x00,wp_drv:0x00
+mode:DIO, clock div:2
+load:0x3fff0018,len:4
+load:0x3fff001c,len:1044
+load:0x40078000,len:10124
+load:0x40080400,len:5828
+entry 0x400806a8
+in setup
+Initializing SD card...
+Write failed
+Guru Meditation Error: Core  1 panic'ed (Cache disabled but cached memory region accessed)
+Core 1 register dump:
+PC      : 0x400d1b10  PS      : 0x00060034  A0      : 0x80081490  A1      : 0x3ffbfa20
+A2      : 0x3ffbdd68  A3      : 0x00000000  A4      : 0x00000400  A5      : 0x3ffcb0b0
+A6      : 0x00000000  A7      : 0x3ffcb0ec  A8      : 0x80081069  A9      : 0x3ffc7d24
+A10     : 0x00000001  A11     : 0x3ffcb664  A12     : 0x00000001  A13     : 0x00000001
+A14     : 0x00060021  A15     : 0x00000000  SAR     : 0x0000001f  EXCCAUSE: 0x00000007  
+EXCVADDR: 0x00000000  LBEG    : 0x4000c2e0  LEND    : 0x4000c2f6  LCOUNT  : 0x00000000
+Core 1 was running in ISR context:
+EPC1    : 0x40095808  EPC2    : 0x00000000  EPC3    : 0x00000000  EPC4    : 0x400d1b10
+
+ELF file SHA256: 0000000000000000
+
+Backtrace: 0x400d1b10:0x3ffbfa20 0x4008148d:0x3ffbfa50 0x4008dc85:0x3ffbfa70 0x40095805:0x3ffcb110 0x40095ef1:0x3ffcb130 0x4008e668:0x3ffcb150 0x4017d979:0x3ffcb1c0 0x4017c211:0x3ffcb1e0 0x4017c84d:0x3ffcb200 0x4017b539:0x3ffcb280 0x4017b5eb:0x3ffcb300 0x4017a7b1:0x3ffcb360 0x4017abfd:0x3ffcb3a0 0x40165c8e:0x3ffcb3c0 0x4016608a:0x3ffcb430 0x4016642e:0x3ffcb460 0x400eec97:0x3ffcb490 0x400d97b1:0x3ffcb4b0 0x400d338e:0x3ffcb4f0 0x400d17fa:0x3ffcb520 0x400d1e8d:0x3ffcb580 0x400db12e:0x3ffcb5b0 0x40090612:0x3ffcb5d0
+
+Rebooting...
+ets Jul 29 2019 12:21:46
+
+rst:0x3 (SW_RESET),boot:0x13 (SPI_FAST_FLASH_BOOT)
+configsip: 0, SPIWP:0xee
+clk_drv:0x00,q_drv:0x00,d_drv:0x00,cs0_drv:0x00,hd_drv:0x00,wp_drv:0x00
+mode:DIO, clock div:2
+load:0x3fff0018,len:4
+load:0x3fff001c,len:1044
+load:0x40078000,len:10124
+load:0x40080400,len:5828
+entry 0x400806a8
+in setup
+Initializing SD card...
+Write failed
+Guru Meditation Error: Core  1 panic'ed (Cache disabled but cached memory region accessed)
+Core 1 register dump:
+PC      : 0x400d1b10  PS      : 0x00060034  A0      : 0x80081490  A1      : 0x3ffbfa20
+A2      : 0x3ffbdd68  A3      : 0x00000000  A4      : 0x00000400  A5      : 0x3ffcb050
+A6      : 0x00000001  A7      : 0x3ffcb664  A8      : 0x80081069  A9      : 0x3ffc7d24
+A10     : 0x00000001  A11     : 0x3ffcb664  A12     : 0x00000001  A13     : 0x00000001
+A14     : 0x00060021  A15     : 0x00000000  SAR     : 0x00000017  EXCCAUSE: 0x00000007  
+EXCVADDR: 0x00000000  LBEG    : 0x4000c2e0  LEND    : 0x4000c2f6  LCOUNT  : 0x00000000
+Core 1 was running in ISR context:
+EPC1    : 0x40062226  EPC2    : 0x00000000  EPC3    : 0x00000000  EPC4    : 0x400d1b10
+
+ELF file SHA256: 0000000000000000
+Backtrace: 0x400d1b10:0x3ffbfa20 0x4008148d:0x3ffbfa50 0x4008dc85:0x3ffbfa70 0x40062223:0x3ffcb090 0x40095613:0x3ffcb0b0 0x4009564e:0x3ffcb0e0 0x400956fa:0x3ffcb110 0x4223:0x3ffcb090 0x40095613:0x30095ef1:0x3ffcb130 0x4008e668:0x3ffcb150 0x4017d979:0x3ffcb1c0 0x4017c211:0x3ffcb1e0:0x3ffcb150 0x4017d979:0x3ffc 0x4017c84d:0x3ffcb200 0x4017b539:0x3ffcb280 0x4017b5eb:0x3ffcb300 0x4017a7b1:0x3ffc3ffcb300 0x4017a7b1:0x3ffcb36b360 0x4017abfd:0x3ffcb3a0 0x40165c8e:0x3ffcb3c0 0x4016608a:0x3ffcb430 0x4016642e:0xcb460 0x400eec97:0x3ffcb490 03ffcb460 0x400eec97:0x3ffcb490 0x400d97b1:0x3ffcb4b0 0x400d338e:0x3ffcb4f0 0x400d17f80 0x400db12e:0x3ffcb5b0 0x40a:0x3ffcb520 0x400d1e8d:0x3ffcb580 0x400db12e:0x3ffcb5b0 0x40090612:0x3ffcb5d0      
+
+Rebooting...
+ets Jul 29 2019 12:21:46
+
+rst:0x3 (SW_RESET),boot:0x13 (SPI_FAST_FLASH_BOOT)
+configsip: 0, SPIWP:0xee
+clk_drv:0x00,q_drv:0x00,d_drv:0x00,cs0_drv:0x00,hd_drv:0x00,wp_drv:0x00
+mode:DIO, clock div:2
+load:0x3fff0018,len:4
+load:0x3fff001c,len:1044
+load:0x40078000,len:10124
+load:0x40080400,len:5828
+entry 0x400806a8
+in setup
+Initializing SD card...
+Write failed
+ble Addr: 7c:9e:bd:d8:f2:02
+exiting setup 1221
+Buff is full, writing to file, ms: 15268
+Buff is full, writing to file

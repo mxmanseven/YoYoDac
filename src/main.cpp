@@ -15,7 +15,10 @@ const byte encoderPinA = 27;
 const byte encoderPinB = 26;
 
 const char* FILE_PATH = "/data.txt";
-File file;
+
+ // use this handle for reading the file 
+ // and sending it line by line to the BLE client
+File file; 
 
 // when uploading file with BLE 
 // avoid writing to file and buff
@@ -52,8 +55,8 @@ void initEncoderTimer() {
   int timerHdId = 0;
   int timerPrescaller = 80;  // 80,000,000 base hz -> 1,000,000
   //int interruptAtScalledTickes = 5000; // 1,000,000 / 5,000 -> 200, some how this results in a timer each 5ms.
-  int interruptAtScalledTickes = 100000; //  some how this results in a timer each 100ms, with prescaler of 80.
-  //int interruptAtScalledTickes = 10000; //  some how this results in a timer each 10ms, with prescaler of 80.
+  //int interruptAtScalledTickes = 100000; //  some how this results in a timer each 100ms, with prescaler of 80.
+  int interruptAtScalledTickes = 10000; //  some how this results in a timer each 10ms, with prescaler of 80.
   //int interruptAtScalledTickes = 1000; //  some how this results in a timer each 1ms, with prescaler of 80.
   encoderTimer = timerBegin(timerHdId, timerPrescaller, true);
   timerAttachInterrupt(encoderTimer, &onEncoderTimer, true);
@@ -62,13 +65,61 @@ void initEncoderTimer() {
 }
 
 class CallbackNextLineOfData: public BLECharacteristicCallbacks {
-    void onRead(BLECharacteristic *characteristic) {
-        //uint32_t m = millis();
-        int m = Encoder::getCount();
-        String mString = "Main callback mills: " + String(m);
-        Serial.println(mString);
-        characteristic->setValue(mString.c_str());
+  void onRead(BLECharacteristic *characteristic) {
+    
+    Serial.println("Reading next line top.");
+
+    if (!file) {      
+      // let's try disabling interupts
+      // looks like this will work :)
+      timerDetachInterrupt(encoderTimer);
+      Encoder::DisableInterrupts();
+
+      Serial.println("Opening file");
+
+      portENTER_CRITICAL_ISR(&encoderTimerMux);
+      uploadFileToBle = true;
+      portEXIT_CRITICAL_ISR(&encoderTimerMux);
+      file = SD.open(FILE_PATH, FILE_READ);
+      
+        if(!file) {
+          Serial.println("Failed to open file for appending");
+          characteristic->setValue("Failed to open file");
+          return;
+        }
+      Serial.println("Opened file.");
     }
+
+    if (file.available()) {
+      Serial.println("File is available");
+      String line = "";
+      line = file.readStringUntil('\n');
+      Serial.println(line);
+      characteristic->setValue(line.c_str());
+    }
+    else {
+      Serial.println("File is not available, closing");
+      characteristic->setValue("");
+      file.close();
+      SD.remove(FILE_PATH);
+      buff.ZeroOut();
+      
+      Serial.println("File closed and deleted.");
+
+      initEncoderTimer();
+      Encoder::AttachInterrupts();
+      portENTER_CRITICAL_ISR(&encoderTimerMux);
+      uploadFileToBle = false;
+      portEXIT_CRITICAL_ISR(&encoderTimerMux);
+    }
+
+      
+    //uint32_t m = millis();
+    // int m = Encoder::getCount();
+    // String mString = "Main callback mills: " + String(m);
+    // Serial.println(mString);
+    // characteristic->setValue(mString.c_str());
+  }
 };
 
 void setup() {
@@ -77,22 +128,18 @@ void setup() {
 
   Serial.println("in setup");
 
-  pinMode(LED_BUILTIN_PIN, OUTPUT);
-  digitalWrite(LED_BUILTIN_PIN, LOW);
-
   // knh todo - change Encoder to a non-static class - maybe
   Encoder::InitEncoder(encoderPinA, encoderPinB, LED_BUILTIN_PIN);
+  initEncoderTimer();
 
   fileKnh.initSdFs();
   fileKnh.writeFile(SD, FILE_PATH, "");
-
-  initEncoderTimer();
 
   // set the callback before initliazing
   bleServerKnh.callbackNextLineOfDate = new CallbackNextLineOfData();
   bleServerKnh.initBle();
 
-  Serial.println("exiting setup 1044");
+  Serial.println("exiting setup 106");
 }
 
 void loop() {
@@ -102,7 +149,8 @@ void loop() {
   isBuffFullLoc = isBuffFull;
   portEXIT_CRITICAL_ISR(&encoderTimerMux);
 
-  //Serial.println("Encoder count: " + String(Encoder::getCount()));
+  // Serial.println("Encoder count: " + String(Encoder::getCount()));
+  // delay(1000);
 
   if (isBuffFullLoc && uploadFileToBle == false) {
     // write buffer to file unless we are uploading file to BLE
@@ -134,7 +182,9 @@ void loop() {
   //   Serial.println("Encoder count: " + count);
   //   bleServerKnh.pCharacteristicSample->setValue(count.c_str());
   // }
-  // else if (bleCommand == "Download") {
+   
+  // if (bleCommand == "D") {
+  //   Serial.println("received download command");
   //   if (!file) {      
   //     portENTER_CRITICAL_ISR(&encoderTimerMux);
   //     uploadFileToBle = true;
@@ -145,23 +195,23 @@ void loop() {
   //       }
   //   }
 
-  //   if (file.available()) {
-  //     String line = "";
-  //     line = file.readStringUntil('\n');
-  //     Serial.print(line);
-  //     bleServerKnh.pCharacteristicSample->setValue(line.c_str());
-  //   }
-  //   else {
-  //     bleServerKnh.pCharacteristicSample->setValue("");
-  //     file.close();
-  //     SD.remove(FILE_PATH);
-  //     buff.ZeroOut();
+    // if (file.available()) {
+    //   String line = "";
+    //   line = file.readStringUntil('\n');
+    //   Serial.print(line);
+    //   bleServerKnh.pCharacteristicSample->setValue(line.c_str());
+    // }
+    // else {
+    //   bleServerKnh.pCharacteristicSample->setValue("");
+    //   file.close();
+    //   SD.remove(FILE_PATH);
+    //   buff.ZeroOut();
       
-  //     portENTER_CRITICAL_ISR(&encoderTimerMux);
-  //     uploadFileToBle = false;
-  //     portEXIT_CRITICAL_ISR(&encoderTimerMux);
-  //   }
-  // }
+    //   portENTER_CRITICAL_ISR(&encoderTimerMux);
+    //   uploadFileToBle = false;
+    //   portEXIT_CRITICAL_ISR(&encoderTimerMux);
+    // }
+  //}
   
   // // clear the command so that we can process the next one.
   // bleServerKnh.pCharacteristicCommandMode->setValue("");
